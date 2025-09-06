@@ -1,0 +1,21 @@
+{
+  "name": "cztery-de",
+  "version": "0.1.0",
+  "description": "4D Space Visualization Project",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "build:frontend": "cd frontend && npm run build",
+    "start:frontend": "cd frontend && npm start",
+    "install:backend": "cd backend && poetry install",
+    "install:frontend": "cd frontend && npm install",
+    "install": "npm run install:backend && npm run install:frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "keywords": ["4d", "visualization", "three.js", "fastapi", "nextjs"],
+  "author": "Tobiasz Bajek",
+  "license": "MIT"
+}
