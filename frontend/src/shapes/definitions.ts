@@ -143,20 +143,28 @@ export function createHillsPlane(options?: {
   };
 }
 
-export function createOrangePlane(options?: {
+export function createGreenPlane(options?: {
   size?: number;       // half-extent of plane in X and Z
   divisions?: number;  // grid divisions per axis
   y?: number;          // vertical placement below cube
   w?: number;          // 4th dimension slice
 }): Shape4D {
+  const size = options?.size ?? 10;
+  const baseSize = 10;
+  const baseDivisions = 24;
+  // Keep fragment density constant by scaling divisions with size
+  const computedDivisions = options?.divisions ?? Math.max(8, Math.round(baseDivisions * (size / baseSize)));
+
   return createHillsPlane({
-    size: options?.size ?? 10,
-    divisions: options?.divisions ?? 24,
+    size,
+    divisions: computedDivisions,
     baseY: options?.y ?? -3.5,
     amplitude: 0.8,
     w: options?.w ?? 0
   });
 }
+
+export { createGreenPlane as createOrangePlane };
 
 export function createBluePlane(options?: {
   size?: number;       // half-extent of plane in X and Z

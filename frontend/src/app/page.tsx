@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FourDVisualization from '@/components/FourDVisualization';
 import { Shape4D } from '@/types/4d';
-import { createGroundPlane, createOrangePlane, createBluePlane } from '@/shapes/definitions';
+import { createGroundPlane, createGreenPlane, createBluePlane } from '@/shapes/definitions';
 import { useTransformForUI } from '@/store/transformStore';
 import { KeyboardControls } from '@/components/KeyboardControls';
 
@@ -16,7 +16,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showWhitePlane, setShowWhitePlane] = useState(false);
   const [showOrangePlane, setShowOrangePlane] = useState(true);
-  const [showBluePlane, setShowBluePlane] = useState(true);
+  const [showBluePlane, setShowBluePlane] = useState(false);
   const [show4DAxes, setShow4DAxes] = useState(true);
   const transform = useTransformForUI();
 
@@ -33,10 +33,10 @@ export default function Home() {
       // Create all shapes once and store them
       const cube = cubeData;
       const whitePlane = createGroundPlane({ size: 10, divisions: 24, y: -3, w: 0 });
-      const orangePlane = createOrangePlane({ size: 10, divisions: 24, y: -2, w: 0 });
+      const greenPlane = createGreenPlane({ size: 15, y: -2, w: 0 });
       const bluePlane = createBluePlane({ size: 10, divisions: 24, y: -1, w: 1 });
 
-      setAllShapes([cube, whitePlane, orangePlane, bluePlane]);
+      setAllShapes([cube, whitePlane, greenPlane, bluePlane]);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch 4D cube');
@@ -50,7 +50,7 @@ export default function Home() {
   const shapes = allShapes.filter((shape, index) => {
     if (index === 0) return true; // Always show cube
     if (index === 1) return showWhitePlane; // White plane
-    if (index === 2) return showOrangePlane; // Orange plane
+    if (index === 2) return showOrangePlane; // Green plane
     if (index === 3) return showBluePlane; // Blue plane
     return true;
   });
@@ -140,10 +140,10 @@ export default function Home() {
                   type="checkbox"
                   checked={showOrangePlane}
                   onChange={(e) => setShowOrangePlane(e.target.checked)}
-                  className="rounded border-gray-600 text-orange-500 focus:ring-orange-500"
+                  className="rounded border-gray-600 text-green-500 focus:ring-green-500"
                 />
-                <span className="text-gray-300">Orange Plane</span>
-                <div className="w-3 h-3 bg-orange-400 rounded border"></div>
+                <span className="text-gray-300">Green Plane</span>
+                <div className="w-3 h-3 bg-green-400 rounded border"></div>
               </label>
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -206,7 +206,7 @@ export default function Home() {
         {shapes.length > 0 && (
           <FourDVisualization
             shapes={shapes}
-            projectionDistance={3}
+            projectionDistance={7}
             show4DAxes={show4DAxes}
           />
         )}

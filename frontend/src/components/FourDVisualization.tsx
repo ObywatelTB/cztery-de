@@ -450,7 +450,7 @@ const FourDVisualization = React.memo(({
   return (
     <div className="w-full h-full">
       <Canvas
-        camera={{ position: [3, 3, 3], fov: 75 }}
+        camera={{ position: [10, 10, 10], fov: 75 }}
         style={{ background: '#0a0a0a' }}
         frameloop="always" // Ensure continuous rendering
         dpr={[1, 2]} // Adaptive pixel ratio for performance
