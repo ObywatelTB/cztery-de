@@ -61,6 +61,7 @@ dist/
 *.swp
 *.swo
 *~
+llm-data
 
 # OS
 .DS_Store

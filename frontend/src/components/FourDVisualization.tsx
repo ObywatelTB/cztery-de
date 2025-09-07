@@ -136,11 +136,11 @@ const CoordinateAxes4D = React.memo(({
   const zAxisGeo = useRef<THREE.BufferGeometry>(null!);
   const wAxisGeo = useRef<THREE.BufferGeometry>(null!);
 
-  // State for axis endpoint positions (for text labels)
-  const [xAxisEnd, setXAxisEnd] = React.useState(new THREE.Vector3(2, 0, 0));
-  const [yAxisEnd, setYAxisEnd] = React.useState(new THREE.Vector3(0, 2, 0));
-  const [zAxisEnd, setZAxisEnd] = React.useState(new THREE.Vector3(0, 0, 2));
-  const [wAxisEnd, setWAxisEnd] = React.useState(new THREE.Vector3(1.5, 0, 0));
+  // Refs for the text label groups
+  const xTextRef = useRef<THREE.Group>(null!);
+  const yTextRef = useRef<THREE.Group>(null!);
+  const zTextRef = useRef<THREE.Group>(null!);
+  const wTextRef = useRef<THREE.Group>(null!);
 
   // Create 4D axis vectors that will be projected to 3D
   const create4DAxis = (axisVector: {x: number, y: number, z: number, w: number}) => {
@@ -170,7 +170,10 @@ const CoordinateAxes4D = React.memo(({
         positions.setXYZ(1, xPoints[1].x, xPoints[1].y, xPoints[1].z);
         positions.needsUpdate = true;
       }
-      setXAxisEnd(new THREE.Vector3(xPoints[1].x, xPoints[1].y, xPoints[1].z));
+      // Update X axis text position imperatively
+      if (xTextRef.current) {
+        xTextRef.current.position.set(xPoints[1].x + 0.2, xPoints[1].y + 0.1, xPoints[1].z);
+      }
 
       // Update Y axis
       const yPoints = create4DAxis({ x: 0, y: 2, z: 0, w: 0 });
@@ -180,7 +183,10 @@ const CoordinateAxes4D = React.memo(({
         positions.setXYZ(1, yPoints[1].x, yPoints[1].y, yPoints[1].z);
         positions.needsUpdate = true;
       }
-      setYAxisEnd(new THREE.Vector3(yPoints[1].x, yPoints[1].y, yPoints[1].z));
+      // Update Y axis text position imperatively
+      if (yTextRef.current) {
+        yTextRef.current.position.set(yPoints[1].x + 0.1, yPoints[1].y + 0.3, yPoints[1].z);
+      }
 
       // Update Z axis
       const zPoints = create4DAxis({ x: 0, y: 0, z: 2, w: 0 });
@@ -190,7 +196,10 @@ const CoordinateAxes4D = React.memo(({
         positions.setXYZ(1, zPoints[1].x, zPoints[1].y, zPoints[1].z);
         positions.needsUpdate = true;
       }
-      setZAxisEnd(new THREE.Vector3(zPoints[1].x, zPoints[1].y, zPoints[1].z));
+      // Update Z axis text position imperatively
+      if (zTextRef.current) {
+        zTextRef.current.position.set(zPoints[1].x + 0.1, zPoints[1].y + 0.1, zPoints[1].z + 0.3);
+      }
 
       // Update W axis - goes along both X and W dimensions for visibility
       const wPoints = create4DAxis({ x: 1.5, y: 0, z: 0, w: 2 });
@@ -200,7 +209,10 @@ const CoordinateAxes4D = React.memo(({
         positions.setXYZ(1, wPoints[1].x, wPoints[1].y, wPoints[1].z);
         positions.needsUpdate = true;
       }
-      setWAxisEnd(new THREE.Vector3(wPoints[1].x, wPoints[1].y, wPoints[1].z));
+      // Update W axis text position imperatively
+      if (wTextRef.current) {
+        wTextRef.current.position.set(wPoints[1].x + 0.3, wPoints[1].y + 0.1, wPoints[1].z);
+      }
     }
   });
 
@@ -314,15 +326,17 @@ const CoordinateAxes4D = React.memo(({
             </bufferGeometry>
             <lineBasicMaterial color="#ff9999" />
           </line>
-          <Text
-            position={[xAxisEnd.x + 0.2, xAxisEnd.y + 0.1, xAxisEnd.z]}
-            fontSize={0.3}
-            color="#ff9999"
-            anchorX="center"
-            anchorY="middle"
-          >
-            X
-          </Text>
+          <group ref={xTextRef}>
+            <Text
+              position={[0.2, 0.1, 0]}
+              fontSize={0.3}
+              color="#ff9999"
+              anchorX="center"
+              anchorY="middle"
+            >
+              X
+            </Text>
+          </group>
 
           {/* Y axis - subtle green */}
           <line>
@@ -336,15 +350,17 @@ const CoordinateAxes4D = React.memo(({
             </bufferGeometry>
             <lineBasicMaterial color="#99ff99" />
           </line>
-          <Text
-            position={[yAxisEnd.x + 0.1, yAxisEnd.y + 0.3, yAxisEnd.z]}
-            fontSize={0.3}
-            color="#99ff99"
-            anchorX="center"
-            anchorY="middle"
-          >
-            Y
-          </Text>
+          <group ref={yTextRef}>
+            <Text
+              position={[0.1, 0.3, 0]}
+              fontSize={0.3}
+              color="#99ff99"
+              anchorX="center"
+              anchorY="middle"
+            >
+              Y
+            </Text>
+          </group>
 
           {/* Z axis - subtle blue */}
           <line>
@@ -358,15 +374,17 @@ const CoordinateAxes4D = React.memo(({
             </bufferGeometry>
             <lineBasicMaterial color="#9999ff" />
           </line>
-          <Text
-            position={[zAxisEnd.x + 0.1, zAxisEnd.y + 0.1, zAxisEnd.z + 0.3]}
-            fontSize={0.3}
-            color="#9999ff"
-            anchorX="center"
-            anchorY="middle"
-          >
-            Z
-          </Text>
+          <group ref={zTextRef}>
+            <Text
+              position={[0.1, 0.1, 0.3]}
+              fontSize={0.3}
+              color="#9999ff"
+              anchorX="center"
+              anchorY="middle"
+            >
+              Z
+            </Text>
+          </group>
 
           {/* W axis - subtle purple */}
           <line>
@@ -380,15 +398,17 @@ const CoordinateAxes4D = React.memo(({
             </bufferGeometry>
             <lineBasicMaterial color="#cc99ff" />
           </line>
-          <Text
-            position={[wAxisEnd.x + 0.3, wAxisEnd.y + 0.1, wAxisEnd.z]}
-            fontSize={0.3}
-            color="#cc99ff"
-            anchorX="center"
-            anchorY="middle"
-          >
-            W
-          </Text>
+          <group ref={wTextRef}>
+            <Text
+              position={[0.3, 0.1, 0]}
+              fontSize={0.3}
+              color="#cc99ff"
+              anchorX="center"
+              anchorY="middle"
+            >
+              W
+            </Text>
+          </group>
         </group>
       )}
     </group>
