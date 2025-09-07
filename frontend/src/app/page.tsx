@@ -30,8 +30,8 @@ export default function Home() {
 
       // Create all shapes once and store them
       const cube = cubeData;
-      const whitePlane = createGroundPlane({ size: 10, divisions: 24, y: -2, w: 0 });
-      const orangePlane = createOrangePlane({ size: 10, divisions: 24, y: -3.5, w: 0 });
+      const whitePlane = createGroundPlane({ size: 10, divisions: 24, y: -3, w: 0 });
+      const orangePlane = createOrangePlane({ size: 10, divisions: 24, y: -2, w: 0 });
 
       setAllShapes([cube, whitePlane, orangePlane]);
       setError(null);

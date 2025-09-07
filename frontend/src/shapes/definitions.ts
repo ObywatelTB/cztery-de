@@ -84,26 +84,36 @@ export function createGroundPlane(options?: {
   };
 }
 
-export function createOrangePlane(options?: {
+export function createHillsPlane(options?: {
   size?: number;       // half-extent of plane in X and Z
   divisions?: number;  // grid divisions per axis
-  y?: number;          // vertical placement below cube
+  baseY?: number;      // base vertical placement below cube
+  amplitude?: number;  // height variation amplitude
   w?: number;          // 4th dimension slice
 }): Shape4D {
   const size = options?.size ?? 10;
-  const divisions = options?.divisions ?? 20;
-  const y = options?.y ?? -3.5;
+  const divisions = options?.divisions ?? 24;
+  const baseY = options?.baseY ?? -3.5;
+  const amplitude = options?.amplitude ?? 0.8;
   const w = options?.w ?? 0;
 
   const step = (size * 2) / divisions;
 
-  // Build grid vertices at constant y and w
+  // Build grid vertices with hills using sine waves
   const vertices: Vector4D[] = [];
   for (let iz = 0; iz <= divisions; iz++) {
     const z = -size + iz * step;
     for (let ix = 0; ix <= divisions; ix++) {
       const x = -size + ix * step;
-      vertices.push({ x, y, z, w });
+
+      // Create hills using multiple sine waves for natural look
+      const hill1 = Math.sin(x * 0.5) * Math.cos(z * 0.3) * amplitude;
+      const hill2 = Math.sin(x * 0.2 + z * 0.4) * amplitude * 0.6;
+      const hill3 = Math.sin((x + z) * 0.15) * amplitude * 0.4;
+
+      const height = baseY + hill1 + hill2 + hill3;
+
+      vertices.push({ x, y: height, z, w });
     }
   }
 
@@ -130,6 +140,21 @@ export function createOrangePlane(options?: {
     affectedByGlobalTransform: false,
     color: '#ff8c00'
   };
+}
+
+export function createOrangePlane(options?: {
+  size?: number;       // half-extent of plane in X and Z
+  divisions?: number;  // grid divisions per axis
+  y?: number;          // vertical placement below cube
+  w?: number;          // 4th dimension slice
+}): Shape4D {
+  return createHillsPlane({
+    size: options?.size ?? 10,
+    divisions: options?.divisions ?? 24,
+    baseY: options?.y ?? -3.5,
+    amplitude: 0.8,
+    w: options?.w ?? 0
+  });
 }
 
 
