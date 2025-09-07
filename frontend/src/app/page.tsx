@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FourDVisualization from '@/components/FourDVisualization';
 import { Shape4D } from '@/types/4d';
-import { createGroundPlane, createOrangePlane } from '@/shapes/definitions';
+import { createGroundPlane, createOrangePlane, createBluePlane } from '@/shapes/definitions';
 import { useTransformForUI } from '@/store/transformStore';
 import { KeyboardControls } from '@/components/KeyboardControls';
 
@@ -16,6 +16,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showWhitePlane, setShowWhitePlane] = useState(true);
   const [showOrangePlane, setShowOrangePlane] = useState(true);
+  const [showBluePlane, setShowBluePlane] = useState(true);
   const [show4DAxes, setShow4DAxes] = useState(false);
   const transform = useTransformForUI();
 
@@ -23,7 +24,7 @@ export default function Home() {
   const fetchCube = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/shapes/cube`);
+      const response = await fetch(`${API_BASE_URL}/shapes/cube?size=1.5`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -33,8 +34,9 @@ export default function Home() {
       const cube = cubeData;
       const whitePlane = createGroundPlane({ size: 10, divisions: 24, y: -3, w: 0 });
       const orangePlane = createOrangePlane({ size: 10, divisions: 24, y: -2, w: 0 });
+      const bluePlane = createBluePlane({ size: 10, divisions: 24, y: -1, w: 1 });
 
-      setAllShapes([cube, whitePlane, orangePlane]);
+      setAllShapes([cube, whitePlane, orangePlane, bluePlane]);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch 4D cube');
@@ -49,6 +51,7 @@ export default function Home() {
     if (index === 0) return true; // Always show cube
     if (index === 1) return showWhitePlane; // White plane
     if (index === 2) return showOrangePlane; // Orange plane
+    if (index === 3) return showBluePlane; // Blue plane
     return true;
   });
 
@@ -101,7 +104,8 @@ export default function Home() {
         <div className="space-y-1 text-gray-300">
           <p><kbd className="bg-gray-700 px-1 rounded">WASD</kbd> - Move X/Y</p>
           <p><kbd className="bg-gray-700 px-1 rounded">QE</kbd> - Move Z</p>
-          <p><kbd className="bg-gray-700 px-1 rounded">ZX</kbd> - Move W (4th dimension)</p>
+          <p><kbd className="bg-gray-700 px-1 rounded">Z</kbd> - Move W deeper (+W)</p>
+          <p><kbd className="bg-gray-700 px-1 rounded">X</kbd> - Move W shallower (-W)</p>
           <div className="mt-2">
             <p className="text-gray-400 text-xs mb-1">4D Rotations:</p>
             <p><kbd className="bg-gray-700 px-1 rounded">I/K</kbd> - XY plane</p>
@@ -140,6 +144,16 @@ export default function Home() {
                 />
                 <span className="text-gray-300">Orange Plane</span>
                 <div className="w-3 h-3 bg-orange-400 rounded border"></div>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showBluePlane}
+                  onChange={(e) => setShowBluePlane(e.target.checked)}
+                  className="rounded border-gray-600 text-blue-500 focus:ring-blue-500"
+                />
+                <span className="text-gray-300">Blue Plane (w=1)</span>
+                <div className="w-3 h-3 bg-blue-400 rounded border"></div>
               </label>
             </div>
           </div>
@@ -192,7 +206,7 @@ export default function Home() {
         {shapes.length > 0 && (
           <FourDVisualization
             shapes={shapes}
-            projectionDistance={5}
+            projectionDistance={3}
             show4DAxes={show4DAxes}
           />
         )}

@@ -202,7 +202,7 @@ const CoordinateAxes4D = React.memo(({
       }
 
       // Update W axis - goes along both X and W dimensions for visibility
-      const wPoints = create4DAxis({ x: 1.5, y: 0, z: 0, w: 2 });
+      const wPoints = create4DAxis({ x: 2, y: 0, z: 0, w: 3 });
       if (wAxisGeo.current) {
         const positions = wAxisGeo.current.attributes.position as THREE.BufferAttribute;
         positions.setXYZ(0, wPoints[0].x, wPoints[0].y, wPoints[0].z);

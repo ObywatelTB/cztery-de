@@ -8,8 +8,8 @@ export function KeyboardControls() {
   const keysPressed = useRef(new Set<string>()).current;
 
   useEffect(() => {
-    const moveSpeed = 0.08;
-    const rotateSpeed = 0.06;
+    const moveSpeed = 0.12;
+    const rotateSpeed = 0.08;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {

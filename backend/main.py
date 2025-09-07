@@ -97,7 +97,7 @@ async def root():
 
 
 @app.get("/shapes/cube")
-async def get_4d_cube(size: float = 1.0):
+async def get_4d_cube(size: float = 1.5):
     """Get a 4D cube (tesseract)"""
     return create_4d_cube(size)
 
