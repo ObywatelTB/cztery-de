@@ -57,6 +57,61 @@ export class Vector4DUtils {
     };
   }
 
+  // New utility function to apply all rotations
+  static rotate(point: Vector4D, transform: Transform4D): Vector4D {
+    let rotated = { ...point };
+
+    // XY rotation
+    const cosXY = Math.cos(transform.rotation_xy);
+    const sinXY = Math.sin(transform.rotation_xy);
+    let tempX = rotated.x * cosXY - rotated.y * sinXY;
+    let tempY = rotated.x * sinXY + rotated.y * cosXY;
+    rotated.x = tempX;
+    rotated.y = tempY;
+
+    // XZ rotation
+    const cosXZ = Math.cos(transform.rotation_xz);
+    const sinXZ = Math.sin(transform.rotation_xz);
+    tempX = rotated.x * cosXZ - rotated.z * sinXZ;
+    let tempZ = rotated.x * sinXZ + rotated.z * cosXZ;
+    rotated.x = tempX;
+    rotated.z = tempZ;
+
+    // XW rotation
+    const cosXW = Math.cos(transform.rotation_xw);
+    const sinXW = Math.sin(transform.rotation_xw);
+    tempX = rotated.x * cosXW - rotated.w * sinXW;
+    let tempW = rotated.x * sinXW + rotated.w * cosXW;
+    rotated.x = tempX;
+    rotated.w = tempW;
+    
+    // YZ rotation
+    const cosYZ = Math.cos(transform.rotation_yz);
+    const sinYZ = Math.sin(transform.rotation_yz);
+    tempY = rotated.y * cosYZ - rotated.z * sinYZ;
+    tempZ = rotated.y * sinYZ + rotated.z * cosYZ;
+    rotated.y = tempY;
+    rotated.z = tempZ;
+
+    // YW rotation
+    const cosYW = Math.cos(transform.rotation_yw);
+    const sinYW = Math.sin(transform.rotation_yw);
+    tempY = rotated.y * cosYW - rotated.w * sinYW;
+    tempW = rotated.y * sinYW + rotated.w * cosYW;
+    rotated.y = tempY;
+    rotated.w = tempW;
+    
+    // ZW rotation
+    const cosZW = Math.cos(transform.rotation_zw);
+    const sinZW = Math.sin(transform.rotation_zw);
+    tempZ = rotated.z * cosZW - rotated.w * sinZW;
+    tempW = rotated.z * sinZW + rotated.w * cosZW;
+    rotated.z = tempZ;
+    rotated.w = tempW;
+
+    return rotated;
+  }
+
   // Project 4D point to 3D using perspective projection - optimized
   static projectTo3D(point: Vector4D, distance: number = 5): { x: number; y: number; z: number } {
     // Handle edge case where w approaches distance to prevent division by near-zero

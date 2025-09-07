@@ -2,23 +2,18 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import FourDVisualization from '@/components/FourDVisualization';
-import { Shape4D, Transform4D } from '@/types/4d';
+import { Shape4D } from '@/types/4d';
+import { useTransformForUI } from '@/store/transformStore';
+import { KeyboardControls } from '@/components/KeyboardControls';
+
 
 const API_BASE_URL = 'http://localhost:3010';
 
 export default function Home() {
   const [shape, setShape] = useState<Shape4D | null>(null);
-  const [transform, setTransform] = useState<Transform4D>({
-    rotation_xy: 0,
-    rotation_xz: 0,
-    rotation_xw: 0,
-    rotation_yz: 0,
-    rotation_yw: 0,
-    rotation_zw: 0,
-    translation: { x: 0, y: 0, z: 0, w: 0 }
-  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const transform = useTransformForUI();
 
   // Fetch 4D cube from backend
   const fetchCube = useCallback(async () => {
@@ -37,160 +32,6 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  // Optimized keyboard controls with reduced state updates
-  useEffect(() => {
-    const keysPressed = new Set<string>();
-    const moveSpeed = 0.08; // Balanced speed - noticeable but controllable
-    const rotateSpeed = 0.06; // Balanced rotation speed
-
-    let lastUpdateTime = 0;
-    const targetFPS = 60;
-    const frameInterval = 1000 / targetFPS;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Prevent default for arrow keys to avoid page scrolling
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-        event.preventDefault();
-      }
-      keysPressed.add(event.key.toLowerCase());
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      keysPressed.delete(event.key.toLowerCase());
-    };
-
-    const updateMovement = (currentTime: number) => {
-      // Throttle updates to target FPS
-      if (currentTime - lastUpdateTime < frameInterval) {
-        requestAnimationFrame(updateMovement);
-        return;
-      }
-      lastUpdateTime = currentTime;
-
-      setTransform(prev => {
-        let hasMovement = false;
-
-        // Create new objects to ensure React detects changes
-        const newTranslation = { ...prev.translation };
-        const newTransform = {
-          ...prev,
-          translation: newTranslation,
-          rotation_xy: prev.rotation_xy,
-          rotation_xz: prev.rotation_xz,
-          rotation_xw: prev.rotation_xw,
-          rotation_yz: prev.rotation_yz,
-          rotation_yw: prev.rotation_yw,
-          rotation_zw: prev.rotation_zw
-        };
-
-        // Translation controls - optimized order
-        if (keysPressed.has('w') || keysPressed.has('arrowup')) {
-          newTranslation.z -= moveSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('s') || keysPressed.has('arrowdown')) {
-          newTranslation.z += moveSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('a') || keysPressed.has('arrowleft')) {
-          newTranslation.x -= moveSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('d') || keysPressed.has('arrowright')) {
-          newTranslation.x += moveSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('q')) {
-          newTranslation.y += moveSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('e')) {
-          newTranslation.y -= moveSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('z')) {
-          newTranslation.w += moveSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('x')) {
-          newTranslation.w -= moveSpeed;
-          hasMovement = true;
-        }
-
-        // Rotation controls - all 6 planes in 4D space
-        if (keysPressed.has('i')) {
-          newTransform.rotation_xy += rotateSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('k')) {
-          newTransform.rotation_xy -= rotateSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('j')) {
-          newTransform.rotation_xz += rotateSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('l')) {
-          newTransform.rotation_xz -= rotateSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('u')) {
-          newTransform.rotation_xw += rotateSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('o')) {
-          newTransform.rotation_xw -= rotateSpeed;
-          hasMovement = true;
-        }
-        // YZ plane rotation (7/8 keys)
-        if (keysPressed.has('7') || keysPressed.has('Digit7')) {
-          newTransform.rotation_yz += rotateSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('8') || keysPressed.has('Digit8')) {
-          newTransform.rotation_yz -= rotateSpeed;
-          hasMovement = true;
-        }
-        // YW plane rotation (9/0 keys)
-        if (keysPressed.has('9') || keysPressed.has('Digit9')) {
-          newTransform.rotation_yw += rotateSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('0') || keysPressed.has('Digit0')) {
-          newTransform.rotation_yw -= rotateSpeed;
-          hasMovement = true;
-        }
-        // ZW plane rotation (;/' keys)
-        if (keysPressed.has(';') || keysPressed.has('Semicolon')) {
-          newTransform.rotation_zw += rotateSpeed;
-          hasMovement = true;
-        }
-        if (keysPressed.has('\'') || keysPressed.has('Quote')) {
-          newTransform.rotation_zw -= rotateSpeed;
-          hasMovement = true;
-        }
-
-
-        return hasMovement ? newTransform : prev;
-      });
-
-      requestAnimationFrame(updateMovement);
-    };
-
-    // Start the animation loop
-    const animationId = requestAnimationFrame(updateMovement);
-
-    // Add event listeners with passive option for better performance
-    window.addEventListener('keydown', handleKeyDown, { passive: false });
-    window.addEventListener('keyup', handleKeyUp, { passive: true });
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      cancelAnimationFrame(animationId);
-    };
   }, []);
 
   // Initialize cube on component mount
@@ -227,6 +68,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
+      <KeyboardControls />
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm p-4">
         <h1 className="text-2xl font-bold text-center">4D Space Visualization</h1>
@@ -280,7 +122,6 @@ export default function Home() {
         {shape && (
           <FourDVisualization
             shape={shape}
-            transform={transform}
             projectionDistance={5}
           />
         )}

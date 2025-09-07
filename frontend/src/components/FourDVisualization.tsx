@@ -1,162 +1,127 @@
 'use client';
 
 import React, { useMemo, useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Line } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Shape4D, Vector4DUtils, Transform4D } from '@/types/4d';
+import { useTransformStore } from '@/store/transformStore';
 
 interface FourDVisualizationProps {
   shape: Shape4D;
-  transform: Transform4D;
   projectionDistance?: number;
 }
 
-// Memoized component to render a single edge in 3D space
-const Edge3D = React.memo(({
-  start,
-  end,
-  color = '#ffffff'
-}: {
-  start: { x: number; y: number; z: number };
-  end: { x: number; y: number; z: number };
-  color?: string;
-}) => {
-  const points = useMemo(() => [
-    new THREE.Vector3(start.x, start.y, start.z),
-    new THREE.Vector3(end.x, end.y, end.z),
-  ], [start.x, start.y, start.z, end.x, end.y, end.z]);
-
-  return (
-    <Line
-      points={points}
-      color={color}
-      lineWidth={2}
-    />
-  );
-});
-
-// Memoized component to render a single vertex in 3D space
-const Vertex3D = React.memo(({
-  position,
-  size = 0.05,
-  color = '#ff6b6b'
-}: {
-  position: { x: number; y: number; z: number };
-  size?: number;
-  color?: string;
-}) => {
-  return (
-    <mesh position={[position.x, position.y, position.z]}>
-      <sphereGeometry args={[size, 6, 6]} />
-      <meshBasicMaterial color={color} />
-    </mesh>
-  );
-});
-
-// Main 4D shape renderer - optimized for performance
+// Main 4D shape renderer - highly optimized for performance
 function Shape4DRenderer({
   shape,
-  transform,
   projectionDistance
 }: {
   shape: Shape4D;
-  transform: Transform4D;
   projectionDistance: number;
 }) {
-  // Memoize projected vertices to avoid recalculation on every render
-  const projectedVertices = useMemo(() => {
-    const result = shape.vertices.map(vertex => {
-      // Apply translation
-      const translated = Vector4DUtils.add(vertex, shape.position);
-      let rotated = Vector4DUtils.add(translated, transform.translation);
+  const { vertices, edges } = shape;
+  const transform = useTransformStore((state) => state.transform);
 
-      // Apply all 6 rotation planes in 4D space (visible in 3D projection)
+  // Create refs for the geometries that we will mutate directly
+  const lineGeo = useRef<THREE.BufferGeometry>(null!);
+  const pointGeo = useRef<THREE.BufferGeometry>(null!);
 
-      // XY rotation - affects X and Y coordinates
-      const cosXY = Math.cos(transform.rotation_xy);
-      const sinXY = Math.sin(transform.rotation_xy);
-      const newX = rotated.x * cosXY - rotated.y * sinXY;
-      const newY = rotated.x * sinXY + rotated.y * cosXY;
-      rotated = { ...rotated, x: newX, y: newY };
+  // Memoize the initial vertex positions to avoid recalculating
+  const initialPositions = useMemo(() => {
+    const pos = new Float32Array(vertices.length * 3);
+    for (let i = 0; i < vertices.length; i++) {
+      pos[i * 3] = vertices[i].x;
+      pos[i * 3 + 1] = vertices[i].y;
+      pos[i * 3 + 2] = vertices[i].z;
+    }
+    return pos;
+  }, [vertices]);
 
-      // XZ rotation - affects X and Z coordinates
-      const cosXZ = Math.cos(transform.rotation_xz);
-      const sinXZ = Math.sin(transform.rotation_xz);
-      const newX2 = rotated.x * cosXZ - rotated.z * sinXZ;
-      const newZ = rotated.x * sinXZ + rotated.z * cosXZ;
-      rotated = { ...rotated, x: newX2, z: newZ };
+  useFrame(() => {
+    if (!lineGeo.current || !pointGeo.current) return;
 
-      // XW rotation - affects X and W coordinates
-      const cosXW = Math.cos(transform.rotation_xw);
-      const sinXW = Math.sin(transform.rotation_xw);
-      const newX3 = rotated.x * cosXW - rotated.w * sinXW;
-      const newW = rotated.x * sinXW + rotated.w * cosXW;
-      rotated = { ...rotated, x: newX3, w: newW };
+    // This is the core animation loop, running at 60fps
+    // It directly manipulates the geometry, bypassing React's render cycle
+    const linePositions = lineGeo.current.attributes.position as THREE.BufferAttribute;
+    const pointPositions = pointGeo.current.attributes.position as THREE.BufferAttribute;
 
-      // YZ rotation - affects Y and Z coordinates
-      const cosYZ = Math.cos(transform.rotation_yz);
-      const sinYZ = Math.sin(transform.rotation_yz);
-      const newY2 = rotated.y * cosYZ - rotated.z * sinYZ;
-      const newZ2 = rotated.y * sinYZ + rotated.z * cosYZ;
-      rotated = { ...rotated, y: newY2, z: newZ2 };
+    for (let i = 0; i < vertices.length; i++) {
+      const vertex = vertices[i];
+      // Apply transformations directly from the store
+      let tempVertex = Vector4DUtils.add(vertex, shape.position);
+      
+      // Rotations
+      tempVertex = Vector4DUtils.rotate(tempVertex, transform);
+      
+      // Translation
+      tempVertex = Vector4DUtils.add(tempVertex, transform.translation);
 
-      // YW rotation - affects Y and W coordinates
-      const cosYW = Math.cos(transform.rotation_yw);
-      const sinYW = Math.sin(transform.rotation_yw);
-      const newY3 = rotated.y * cosYW - rotated.w * sinYW;
-      const newW2 = rotated.y * sinYW + rotated.w * cosYW;
-      rotated = { ...rotated, y: newY3, w: newW2 };
+      // Projection
+      const p3d = Vector4DUtils.projectTo3D(tempVertex, projectionDistance);
 
-      // ZW rotation - affects Z and W coordinates
-      const cosZW = Math.cos(transform.rotation_zw);
-      const sinZW = Math.sin(transform.rotation_zw);
-      const newZ3 = rotated.z * cosZW - rotated.w * sinZW;
-      const newW3 = rotated.z * sinZW + rotated.w * cosZW;
-      rotated = { ...rotated, z: newZ3, w: newW3 };
+      // Update the buffer attributes
+      linePositions.setXYZ(i, p3d.x, p3d.y, p3d.z);
+      pointPositions.setXYZ(i, p3d.x, p3d.y, p3d.z);
+    }
 
-      // Apply 4D to 3D projection
-      return Vector4DUtils.projectTo3D(rotated, projectionDistance);
+    // Tell Three.js to update the geometries
+    linePositions.needsUpdate = true;
+    pointPositions.needsUpdate = true;
+  });
+
+  // Create the line segments geometry once
+  const lineSegments = useMemo(() => {
+    const indices: number[] = [];
+    edges.forEach(edge => {
+      indices.push(edge[0], edge[1]);
     });
-
-    return result;
-  }, [shape.vertices, shape.position, transform.translation, transform.rotation_xy, transform.rotation_xz, transform.rotation_xw, transform.rotation_yz, transform.rotation_yw, transform.rotation_zw, projectionDistance]);
-
-  // Memoize edges to avoid recreating edge components
-  const edges = useMemo(() => {
-    return shape.edges.map((edge, index) => {
-      const startVertex = projectedVertices[edge[0]];
-      const endVertex = projectedVertices[edge[1]];
-
-      if (!startVertex || !endVertex) return null;
-
-      return (
-        <Edge3D
-          key={`edge-${index}`}
-          start={startVertex}
-          end={endVertex}
-        />
-      );
-    });
-  }, [shape.edges, projectedVertices]);
-
-  // Memoize vertices to avoid recreating vertex components
-  const vertices = useMemo(() => {
-    return projectedVertices.map((vertex, index) => (
-      <Vertex3D
-        key={`vertex-${index}`}
-        position={vertex}
-      />
-    ));
-  }, [projectedVertices]);
+    return (
+      <lineSegments>
+        <bufferGeometry ref={lineGeo} attach="geometry">
+          <bufferAttribute
+            attach="attributes-position"
+            count={vertices.length}
+            array={initialPositions}
+            itemSize={3}
+          />
+          <bufferAttribute
+            attach="index"
+            count={indices.length}
+            array={new Uint16Array(indices)}
+            itemSize={1}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial attach="material" color="#ffffff" />
+      </lineSegments>
+    );
+  }, [edges, initialPositions, vertices.length]);
+  
+  // Create the points geometry once
+  const points = useMemo(() => {
+     return (
+        <points>
+            <bufferGeometry ref={pointGeo} attach="geometry">
+                <bufferAttribute
+                    attach="attributes-position"
+                    count={vertices.length}
+                    array={initialPositions}
+                    itemSize={3}
+                />
+            </bufferGeometry>
+            <pointsMaterial attach="material" color="#ff6b6b" size={0.05} />
+        </points>
+     )
+  }, [initialPositions, vertices.length]);
 
   return (
     <group>
-      {edges}
-      {vertices}
+      {lineSegments}
+      {points}
     </group>
   );
 }
+
 
 // Static coordinate axes component - only created once
 const CoordinateAxes = React.memo(() => {
@@ -177,9 +142,9 @@ const CoordinateAxes = React.memo(() => {
 
   return (
     <group>
-      <Line points={xAxisPoints} color="#ff0000" lineWidth={1} />
-      <Line points={yAxisPoints} color="#00ff00" lineWidth={1} />
-      <Line points={zAxisPoints} color="#0000ff" lineWidth={1} />
+      <line points={xAxisPoints} color="#ff0000" lineWidth={1} />
+      <line points={yAxisPoints} color="#00ff00" lineWidth={1} />
+      <line points={zAxisPoints} color="#0000ff" lineWidth={1} />
     </group>
   );
 });
@@ -187,7 +152,6 @@ const CoordinateAxes = React.memo(() => {
 // Main visualization component - optimized for high frame rates
 const FourDVisualization = React.memo(({
   shape,
-  transform,
   projectionDistance = 5
 }: FourDVisualizationProps) => {
   return (
@@ -203,7 +167,6 @@ const FourDVisualization = React.memo(({
 
         <Shape4DRenderer
           shape={shape}
-          transform={transform}
           projectionDistance={projectionDistance}
         />
 
