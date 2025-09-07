@@ -14,10 +14,10 @@ export default function Home() {
   const [allShapes, setAllShapes] = useState<Shape4D[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showWhitePlane, setShowWhitePlane] = useState(true);
+  const [showWhitePlane, setShowWhitePlane] = useState(false);
   const [showOrangePlane, setShowOrangePlane] = useState(true);
   const [showBluePlane, setShowBluePlane] = useState(true);
-  const [show4DAxes, setShow4DAxes] = useState(false);
+  const [show4DAxes, setShow4DAxes] = useState(true);
   const transform = useTransformForUI();
 
   // Fetch 4D cube from backend and create planes once
