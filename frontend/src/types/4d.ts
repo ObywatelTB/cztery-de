@@ -57,9 +57,15 @@ export class Vector4DUtils {
     };
   }
 
-  // Project 4D point to 3D using perspective projection
+  // Project 4D point to 3D using perspective projection - optimized
   static projectTo3D(point: Vector4D, distance: number = 5): { x: number; y: number; z: number } {
-    const factor = distance / (distance - point.w);
+    // Handle edge case where w approaches distance to prevent division by near-zero
+    const denominator = distance - point.w;
+    if (Math.abs(denominator) < 0.001) {
+      return { x: point.x * 1000, y: point.y * 1000, z: point.z * 1000 };
+    }
+
+    const factor = distance / denominator;
     return {
       x: point.x * factor,
       y: point.y * factor,

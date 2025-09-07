@@ -39,76 +39,135 @@ export default function Home() {
     }
   }, []);
 
-  // Keyboard controls
+  // Optimized keyboard controls with reduced state updates
   useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      const moveSpeed = 0.1;
-      const rotateSpeed = 0.1;
+    const keysPressed = new Set<string>();
+    const moveSpeed = 0.2; // Much faster for visible movement
+    const rotateSpeed = 0.15; // Much faster rotation
 
-      setTransform(prev => {
-        const newTransform = { ...prev };
+    let lastUpdateTime = 0;
+    const targetFPS = 60;
+    const frameInterval = 1000 / targetFPS;
 
-        switch (event.key.toLowerCase()) {
-          // Translation controls
-          case 'w':
-          case 'arrowup':
-            newTransform.translation.z -= moveSpeed;
-            break;
-          case 's':
-          case 'arrowdown':
-            newTransform.translation.z += moveSpeed;
-            break;
-          case 'a':
-          case 'arrowleft':
-            newTransform.translation.x -= moveSpeed;
-            break;
-          case 'd':
-          case 'arrowright':
-            newTransform.translation.x += moveSpeed;
-            break;
-          case 'q':
-            newTransform.translation.y += moveSpeed;
-            break;
-          case 'e':
-            newTransform.translation.y -= moveSpeed;
-            break;
-          case 'z':
-            newTransform.translation.w += moveSpeed;
-            break;
-          case 'x':
-            newTransform.translation.w -= moveSpeed;
-            break;
-
-          // Rotation controls
-          case 'i':
-            newTransform.rotation_xy += rotateSpeed;
-            break;
-          case 'k':
-            newTransform.rotation_xy -= rotateSpeed;
-            break;
-          case 'j':
-            newTransform.rotation_xz += rotateSpeed;
-            break;
-          case 'l':
-            newTransform.rotation_xz -= rotateSpeed;
-            break;
-          case 'u':
-            newTransform.rotation_xw += rotateSpeed;
-            break;
-          case 'o':
-            newTransform.rotation_xw -= rotateSpeed;
-            break;
-
-          default:
-            return prev;
-        }
-
-        return newTransform;
-      });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Prevent default for arrow keys to avoid page scrolling
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+      }
+      keysPressed.add(event.key.toLowerCase());
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    const handleKeyUp = (event: KeyboardEvent) => {
+      keysPressed.delete(event.key.toLowerCase());
+    };
+
+    const updateMovement = (currentTime: number) => {
+      // Throttle updates to target FPS
+      if (currentTime - lastUpdateTime < frameInterval) {
+        requestAnimationFrame(updateMovement);
+        return;
+      }
+      lastUpdateTime = currentTime;
+
+      setTransform(prev => {
+        let hasMovement = false;
+
+        // Create new objects to ensure React detects changes
+        const newTranslation = { ...prev.translation };
+        const newTransform = {
+          ...prev,
+          translation: newTranslation,
+          rotation_xy: prev.rotation_xy,
+          rotation_xz: prev.rotation_xz,
+          rotation_xw: prev.rotation_xw,
+          rotation_yz: prev.rotation_yz,
+          rotation_yw: prev.rotation_yw,
+          rotation_zw: prev.rotation_zw
+        };
+
+        // Translation controls - optimized order
+        if (keysPressed.has('w') || keysPressed.has('arrowup')) {
+          newTranslation.z -= moveSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('s') || keysPressed.has('arrowdown')) {
+          newTranslation.z += moveSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('a') || keysPressed.has('arrowleft')) {
+          newTranslation.x -= moveSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('d') || keysPressed.has('arrowright')) {
+          newTranslation.x += moveSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('q')) {
+          newTranslation.y += moveSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('e')) {
+          newTranslation.y -= moveSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('z')) {
+          newTranslation.w += moveSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('x')) {
+          newTranslation.w -= moveSpeed;
+          hasMovement = true;
+        }
+
+        // Rotation controls
+        if (keysPressed.has('i')) {
+          newTransform.rotation_xy += rotateSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('k')) {
+          newTransform.rotation_xy -= rotateSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('j')) {
+          newTransform.rotation_xz += rotateSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('l')) {
+          newTransform.rotation_xz -= rotateSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('u')) {
+          newTransform.rotation_xw += rotateSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('o')) {
+          newTransform.rotation_xw -= rotateSpeed;
+          hasMovement = true;
+        }
+
+        // Debug logging (remove this later)
+        if (hasMovement) {
+          console.log('Movement detected, new transform:', newTranslation);
+        }
+
+        return hasMovement ? newTransform : prev;
+      });
+
+      requestAnimationFrame(updateMovement);
+    };
+
+    // Start the animation loop
+    const animationId = requestAnimationFrame(updateMovement);
+
+    // Add event listeners with passive option for better performance
+    window.addEventListener('keydown', handleKeyDown, { passive: false });
+    window.addEventListener('keyup', handleKeyUp, { passive: true });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      cancelAnimationFrame(animationId);
+    };
   }, []);
 
   // Initialize cube on component mount
@@ -164,14 +223,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Transform Info */}
+      {/* Transform Info - memoized for performance */}
       <div className="absolute top-20 right-4 z-10 bg-black/70 backdrop-blur-sm p-4 rounded-lg text-sm">
         <h3 className="font-semibold mb-2">Position:</h3>
         <div className="space-y-1 text-gray-300 font-mono">
-          <p>X: {transform.translation.x.toFixed(2)}</p>
-          <p>Y: {transform.translation.y.toFixed(2)}</p>
-          <p>Z: {transform.translation.z.toFixed(2)}</p>
-          <p>W: {transform.translation.w.toFixed(2)}</p>
+          <p>X: {transform.translation.x.toFixed(1)}</p>
+          <p>Y: {transform.translation.y.toFixed(1)}</p>
+          <p>Z: {transform.translation.z.toFixed(1)}</p>
+          <p>W: {transform.translation.w.toFixed(1)}</p>
         </div>
       </div>
 
