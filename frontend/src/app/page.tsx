@@ -42,8 +42,8 @@ export default function Home() {
   // Optimized keyboard controls with reduced state updates
   useEffect(() => {
     const keysPressed = new Set<string>();
-    const moveSpeed = 0.2; // Much faster for visible movement
-    const rotateSpeed = 0.15; // Much faster rotation
+    const moveSpeed = 0.08; // Balanced speed - noticeable but controllable
+    const rotateSpeed = 0.06; // Balanced rotation speed
 
     let lastUpdateTime = 0;
     const targetFPS = 60;
@@ -145,10 +145,6 @@ export default function Home() {
           hasMovement = true;
         }
 
-        // Debug logging (remove this later)
-        if (hasMovement) {
-          console.log('Movement detected, new transform:', newTranslation);
-        }
 
         return hasMovement ? newTransform : prev;
       });

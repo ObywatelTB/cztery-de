@@ -75,9 +75,6 @@ function Shape4DRenderer({
       return Vector4DUtils.projectTo3D(withTransform, projectionDistance);
     });
 
-    // Debug logging (remove this later)
-    console.log('Transform:', transform.translation);
-    console.log('First projected vertex:', result[0]);
 
     return result;
   }, [shape.vertices, shape.position, transform.translation, projectionDistance]);
@@ -150,8 +147,6 @@ const FourDVisualization = React.memo(({
   transform,
   projectionDistance = 5
 }: FourDVisualizationProps) => {
-  // Debug logging to verify component is re-rendering
-  console.log('FourDVisualization render, transform:', transform.translation);
   return (
     <div className="w-full h-full">
       <Canvas
