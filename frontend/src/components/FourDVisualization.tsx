@@ -8,7 +8,7 @@ import { Shape4D, Vector4DUtils, Transform4D } from '@/types/4d';
 import { useTransformStore } from '@/store/transformStore';
 
 interface FourDVisualizationProps {
-  shape: Shape4D;
+  shapes: Shape4D[];
   projectionDistance?: number;
 }
 
@@ -151,7 +151,7 @@ const CoordinateAxes = React.memo(() => {
 
 // Main visualization component - optimized for high frame rates
 const FourDVisualization = React.memo(({
-  shape,
+  shapes,
   projectionDistance = 5
 }: FourDVisualizationProps) => {
   return (
@@ -165,10 +165,13 @@ const FourDVisualization = React.memo(({
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
 
-        <Shape4DRenderer
-          shape={shape}
-          projectionDistance={projectionDistance}
-        />
+        {shapes.map((shape, idx) => (
+          <Shape4DRenderer
+            key={idx}
+            shape={shape}
+            projectionDistance={projectionDistance}
+          />
+        ))}
 
         <OrbitControls
           enablePan={true}

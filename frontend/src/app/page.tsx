@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FourDVisualization from '@/components/FourDVisualization';
 import { Shape4D } from '@/types/4d';
+import { createGroundPlane } from '@/shapes/definitions';
 import { useTransformForUI } from '@/store/transformStore';
 import { KeyboardControls } from '@/components/KeyboardControls';
 
@@ -10,7 +11,7 @@ import { KeyboardControls } from '@/components/KeyboardControls';
 const API_BASE_URL = 'http://localhost:3010';
 
 export default function Home() {
-  const [shape, setShape] = useState<Shape4D | null>(null);
+  const [shapes, setShapes] = useState<Shape4D[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const transform = useTransformForUI();
@@ -24,7 +25,8 @@ export default function Home() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const cubeData = await response.json();
-      setShape(cubeData);
+      const plane = createGroundPlane({ size: 10, divisions: 24, y: -2, w: 0 });
+      setShapes([cubeData, plane]);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch 4D cube');
@@ -119,9 +121,9 @@ export default function Home() {
 
       {/* 3D Visualization */}
       <div className="w-full h-screen">
-        {shape && (
+        {shapes.length > 0 && (
           <FourDVisualization
-            shape={shape}
+            shapes={shapes}
             projectionDistance={5}
           />
         )}
