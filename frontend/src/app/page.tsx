@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import FourDVisualization from '@/components/FourDVisualization';
 import { Shape4D, Transform4D } from '@/types/4d';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://localhost:3010';
 
 export default function Home() {
   const [shape, setShape] = useState<Shape4D | null>(null);

@@ -56,7 +56,7 @@ dist/
 .env.production.local
 
 # IDE
-.vscode/
+# .vscode/
 .idea/
 *.swp
 *.swo
