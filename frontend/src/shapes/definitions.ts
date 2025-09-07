@@ -144,24 +144,114 @@ export function createHillsPlane(options?: {
 }
 
 export function createGreenPlane(options?: {
-  size?: number;       // half-extent of plane in X and Z
-  divisions?: number;  // grid divisions per axis
-  y?: number;          // vertical placement below cube
-  w?: number;          // 4th dimension slice
+  size?: number;        // half-extent along X and Z
+  divisions?: number;   // grid divisions (per X/Z axis)
+  y?: number;           // base Y placement of hills
+  w?: number;           // legacy: single W slice (kept for compatibility)
+  wSize?: number;       // half-extent along W to extrude the surface
+  wDivisions?: number;  // grid divisions along W
 }): Shape4D {
   const size = options?.size ?? 10;
   const baseSize = 10;
   const baseDivisions = 24;
   // Keep fragment density constant by scaling divisions with size
-  const computedDivisions = options?.divisions ?? Math.max(8, Math.round(baseDivisions * (size / baseSize)));
+  const divisions = options?.divisions ?? Math.max(8, Math.round(baseDivisions * (size / baseSize)));
+  const baseY = options?.y ?? -3.5;
+  const amplitude = 0.8;
 
-  return createHillsPlane({
-    size,
-    divisions: computedDivisions,
-    baseY: options?.y ?? -3.5,
-    amplitude: 0.8,
-    w: options?.w ?? 0
-  });
+  // If wSize is not provided, fall back to a single-slice plane at provided w (legacy behavior)
+  const wSize = options?.wSize;
+  const wDivisions = options?.wDivisions ?? (wSize ? Math.max(2, Math.round(baseDivisions * ((wSize * 2) / baseSize))) : 0);
+  const legacyW = options?.w ?? 0;
+
+  // Helpers
+  const stepXZ = (size * 2) / divisions;
+  const stepW = wSize ? (wSize * 2) / wDivisions : 0;
+
+  const vertices: Vector4D[] = [];
+  const edges: number[][] = [];
+
+  const computeHeight = (x: number, z: number) => {
+    const hill1 = Math.sin(x * 0.5) * Math.cos(z * 0.3) * amplitude;
+    const hill2 = Math.sin(x * 0.2 + z * 0.4) * amplitude * 0.6;
+    const hill3 = Math.sin((x + z) * 0.15) * amplitude * 0.4;
+    return baseY + hill1 + hill2 + hill3;
+  };
+
+  if (!wSize) {
+    // Legacy: single W slice
+    for (let iz = 0; iz <= divisions; iz++) {
+      const z = -size + iz * stepXZ;
+      for (let ix = 0; ix <= divisions; ix++) {
+        const x = -size + ix * stepXZ;
+        const y = computeHeight(x, z);
+        vertices.push({ x, y, z, w: legacyW });
+      }
+    }
+
+    const index = (ix: number, iz: number) => iz * (divisions + 1) + ix;
+    // Connect along X
+    for (let iz = 0; iz <= divisions; iz++) {
+      for (let ix = 0; ix < divisions; ix++) {
+        edges.push([index(ix, iz), index(ix + 1, iz)]);
+      }
+    }
+    // Connect along Z
+    for (let ix = 0; ix <= divisions; ix++) {
+      for (let iz = 0; iz < divisions; iz++) {
+        edges.push([index(ix, iz), index(ix, iz + 1)]);
+      }
+    }
+  } else {
+    // Extruded along W: 3D lattice in X, Z, W
+    const verticesPerSlice = (divisions + 1) * (divisions + 1);
+    const index = (ix: number, iz: number, iw: number) => iw * verticesPerSlice + iz * (divisions + 1) + ix;
+
+    for (let iw = 0; iw <= wDivisions; iw++) {
+      const w = -wSize + iw * stepW;
+      for (let iz = 0; iz <= divisions; iz++) {
+        const z = -size + iz * stepXZ;
+        for (let ix = 0; ix <= divisions; ix++) {
+          const x = -size + ix * stepXZ;
+          const y = computeHeight(x, z);
+          vertices.push({ x, y, z, w });
+        }
+      }
+    }
+
+    // Connect along X within each (Z,W) row
+    for (let iw = 0; iw <= wDivisions; iw++) {
+      for (let iz = 0; iz <= divisions; iz++) {
+        for (let ix = 0; ix < divisions; ix++) {
+          edges.push([index(ix, iz, iw), index(ix + 1, iz, iw)]);
+        }
+      }
+    }
+    // Connect along Z within each (X,W) column
+    for (let iw = 0; iw <= wDivisions; iw++) {
+      for (let ix = 0; ix <= divisions; ix++) {
+        for (let iz = 0; iz < divisions; iz++) {
+          edges.push([index(ix, iz, iw), index(ix, iz + 1, iw)]);
+        }
+      }
+    }
+    // Connect along W between slices for each (X,Z) point
+    for (let iw = 0; iw < wDivisions; iw++) {
+      for (let iz = 0; iz <= divisions; iz++) {
+        for (let ix = 0; ix <= divisions; ix++) {
+          edges.push([index(ix, iz, iw), index(ix, iz, iw + 1)]);
+        }
+      }
+    }
+  }
+
+  return {
+    vertices,
+    edges,
+    position: { x: 0, y: 0, z: 0, w: 0 },
+    affectedByGlobalTransform: false,
+    color: 'green'
+  };
 }
 
 export { createGreenPlane as createOrangePlane };
