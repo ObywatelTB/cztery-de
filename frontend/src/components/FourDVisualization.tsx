@@ -10,6 +10,7 @@ import { useTransformStore } from '@/store/transformStore';
 interface FourDVisualizationProps {
   shapes: Shape4D[];
   projectionDistance?: number;
+  show4DAxes?: boolean;
 }
 
 // Main 4D shape renderer - highly optimized for performance
@@ -119,7 +120,140 @@ function Shape4DRenderer({
 }
 
 
-// Static coordinate axes component - only created once
+// 4D coordinate axes component with subtle colors
+const CoordinateAxes4D = React.memo(({
+  projectionDistance = 5,
+  showAxes = true
+}: {
+  projectionDistance?: number;
+  showAxes?: boolean;
+}) => {
+  const transform = useTransformStore((state) => state.transform);
+
+  // Refs for the line geometries
+  const xAxisGeo = useRef<THREE.BufferGeometry>(null!);
+  const yAxisGeo = useRef<THREE.BufferGeometry>(null!);
+  const zAxisGeo = useRef<THREE.BufferGeometry>(null!);
+  const wAxisGeo = useRef<THREE.BufferGeometry>(null!);
+
+  // Create 4D axis vectors that will be projected to 3D
+  const create4DAxis = (axisVector: {x: number, y: number, z: number, w: number}) => {
+    const points = [
+      { x: 0, y: 0, z: 0, w: 0 },
+      axisVector
+    ];
+
+    return points.map(point => {
+      // Apply global transform
+      let tempPoint = Vector4DUtils.rotate(point, transform);
+      tempPoint = Vector4DUtils.add(tempPoint, transform.translation);
+
+      // Project to 3D
+      return Vector4DUtils.projectTo3D(tempPoint, projectionDistance);
+    });
+  };
+
+  // Update axes positions in useFrame
+  useFrame(() => {
+    if (!showAxes) return;
+
+    // Update X axis
+    const xPoints = create4DAxis({ x: 2, y: 0, z: 0, w: 0 });
+    if (xAxisGeo.current) {
+      const positions = xAxisGeo.current.attributes.position as THREE.BufferAttribute;
+      positions.setXYZ(0, xPoints[0].x, xPoints[0].y, xPoints[0].z);
+      positions.setXYZ(1, xPoints[1].x, xPoints[1].y, xPoints[1].z);
+      positions.needsUpdate = true;
+    }
+
+    // Update Y axis
+    const yPoints = create4DAxis({ x: 0, y: 2, z: 0, w: 0 });
+    if (yAxisGeo.current) {
+      const positions = yAxisGeo.current.attributes.position as THREE.BufferAttribute;
+      positions.setXYZ(0, yPoints[0].x, yPoints[0].y, yPoints[0].z);
+      positions.setXYZ(1, yPoints[1].x, yPoints[1].y, yPoints[1].z);
+      positions.needsUpdate = true;
+    }
+
+    // Update Z axis
+    const zPoints = create4DAxis({ x: 0, y: 0, z: 2, w: 0 });
+    if (zAxisGeo.current) {
+      const positions = zAxisGeo.current.attributes.position as THREE.BufferAttribute;
+      positions.setXYZ(0, zPoints[0].x, zPoints[0].y, zPoints[0].z);
+      positions.setXYZ(1, zPoints[1].x, zPoints[1].y, zPoints[1].z);
+      positions.needsUpdate = true;
+    }
+
+    // Update W axis - goes along both X and W dimensions for visibility
+    const wPoints = create4DAxis({ x: 1.5, y: 0, z: 0, w: 2 });
+    if (wAxisGeo.current) {
+      const positions = wAxisGeo.current.attributes.position as THREE.BufferAttribute;
+      positions.setXYZ(0, wPoints[0].x, wPoints[0].y, wPoints[0].z);
+      positions.setXYZ(1, wPoints[1].x, wPoints[1].y, wPoints[1].z);
+      positions.needsUpdate = true;
+    }
+  });
+
+  if (!showAxes) return null;
+
+  return (
+    <group>
+      {/* X axis - subtle red */}
+      <line>
+        <bufferGeometry ref={xAxisGeo}>
+          <bufferAttribute
+            attach="attributes-position"
+            count={2}
+            array={new Float32Array([0, 0, 0, 2, 0, 0])}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ff9999" />
+      </line>
+
+      {/* Y axis - subtle green */}
+      <line>
+        <bufferGeometry ref={yAxisGeo}>
+          <bufferAttribute
+            attach="attributes-position"
+            count={2}
+            array={new Float32Array([0, 0, 0, 0, 2, 0])}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#99ff99" />
+      </line>
+
+      {/* Z axis - subtle blue */}
+      <line>
+        <bufferGeometry ref={zAxisGeo}>
+          <bufferAttribute
+            attach="attributes-position"
+            count={2}
+            array={new Float32Array([0, 0, 0, 0, 0, 2])}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#9999ff" />
+      </line>
+
+      {/* W axis - subtle purple */}
+      <line>
+        <bufferGeometry ref={wAxisGeo}>
+          <bufferAttribute
+            attach="attributes-position"
+            count={2}
+            array={new Float32Array([0, 0, 0, 1.5, 0, 0])}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#cc99ff" />
+      </line>
+    </group>
+  );
+});
+
+// Legacy 3D axes component for backward compatibility
 const CoordinateAxes = React.memo(() => {
   const xAxisPoints = useMemo(() => [
     new THREE.Vector3(-2, 0, 0),
@@ -148,7 +282,8 @@ const CoordinateAxes = React.memo(() => {
 // Main visualization component - optimized for high frame rates
 const FourDVisualization = React.memo(({
   shapes,
-  projectionDistance = 5
+  projectionDistance = 5,
+  show4DAxes = false
 }: FourDVisualizationProps) => {
   return (
     <div className="w-full h-full">
@@ -176,8 +311,11 @@ const FourDVisualization = React.memo(({
           enableDamping={false} // Disable damping for immediate response
         />
 
-        {/* Static coordinate axes */}
-        <CoordinateAxes />
+        {/* 4D coordinate axes with subtle colors */}
+        <CoordinateAxes4D
+          projectionDistance={projectionDistance}
+          showAxes={show4DAxes}
+        />
       </Canvas>
     </div>
   );

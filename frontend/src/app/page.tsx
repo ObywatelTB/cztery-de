@@ -16,6 +16,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showWhitePlane, setShowWhitePlane] = useState(true);
   const [showOrangePlane, setShowOrangePlane] = useState(true);
+  const [show4DAxes, setShow4DAxes] = useState(false);
   const transform = useTransformForUI();
 
   // Fetch 4D cube from backend and create planes once
@@ -113,30 +114,55 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Plane Visibility Controls */}
+      {/* Visibility Controls */}
       <div className="absolute top-96 left-4 z-10 bg-black/70 backdrop-blur-sm p-4 rounded-lg text-sm">
-        <h3 className="font-semibold mb-3">Plane Visibility:</h3>
-        <div className="space-y-2">
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showWhitePlane}
-              onChange={(e) => setShowWhitePlane(e.target.checked)}
-              className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-gray-300">White Plane</span>
-            <div className="w-3 h-3 bg-white rounded border"></div>
-          </label>
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showOrangePlane}
-              onChange={(e) => setShowOrangePlane(e.target.checked)}
-              className="rounded border-gray-600 text-orange-500 focus:ring-orange-500"
-            />
-            <span className="text-gray-300">Orange Plane</span>
-            <div className="w-3 h-3 bg-orange-400 rounded border"></div>
-          </label>
+        <div className="space-y-4">
+          {/* Plane Visibility */}
+          <div>
+            <h3 className="font-semibold mb-3">Plane Visibility:</h3>
+            <div className="space-y-2">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showWhitePlane}
+                  onChange={(e) => setShowWhitePlane(e.target.checked)}
+                  className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-gray-300">White Plane</span>
+                <div className="w-3 h-3 bg-white rounded border"></div>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showOrangePlane}
+                  onChange={(e) => setShowOrangePlane(e.target.checked)}
+                  className="rounded border-gray-600 text-orange-500 focus:ring-orange-500"
+                />
+                <span className="text-gray-300">Orange Plane</span>
+                <div className="w-3 h-3 bg-orange-400 rounded border"></div>
+              </label>
+            </div>
+          </div>
+
+          {/* 4D Axes Control */}
+          <div>
+            <h3 className="font-semibold mb-3">4D Axes:</h3>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={show4DAxes}
+                onChange={(e) => setShow4DAxes(e.target.checked)}
+                className="rounded border-gray-600 text-purple-600 focus:ring-purple-500"
+              />
+              <span className="text-gray-300">Show 4D Axes</span>
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-red-300 rounded border"></div>
+                <div className="w-2 h-2 bg-green-300 rounded border"></div>
+                <div className="w-2 h-2 bg-blue-300 rounded border"></div>
+                <div className="w-2 h-2 bg-purple-300 rounded border"></div>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -167,6 +193,7 @@ export default function Home() {
           <FourDVisualization
             shapes={shapes}
             projectionDistance={5}
+            show4DAxes={show4DAxes}
           />
         )}
       </div>

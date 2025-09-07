@@ -138,7 +138,8 @@ export function createHillsPlane(options?: {
     edges,
     position: { x: 0, y: 0, z: 0, w: 0 },
     affectedByGlobalTransform: false,
-    color: '#ff8c00'
+    // color: '#ff8c00'
+    color: 'green'
   };
 }
 
