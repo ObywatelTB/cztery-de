@@ -48,19 +48,15 @@ function Shape4DRenderer({
 
     for (let i = 0; i < vertices.length; i++) {
       const vertex = vertices[i];
-      // Apply transformations directly from the store
       let tempVertex = Vector4DUtils.add(vertex, shape.position);
-      
-      // Rotations
-      tempVertex = Vector4DUtils.rotate(tempVertex, transform);
-      
-      // Translation
-      tempVertex = Vector4DUtils.add(tempVertex, transform.translation);
 
-      // Projection
+      if (shape.affectedByGlobalTransform !== false) {
+        tempVertex = Vector4DUtils.rotate(tempVertex, transform);
+        tempVertex = Vector4DUtils.add(tempVertex, transform.translation);
+      }
+
       const p3d = Vector4DUtils.projectTo3D(tempVertex, projectionDistance);
 
-      // Update the buffer attributes
       linePositions.setXYZ(i, p3d.x, p3d.y, p3d.z);
       pointPositions.setXYZ(i, p3d.x, p3d.y, p3d.z);
     }

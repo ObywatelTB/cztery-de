@@ -1,5 +1,14 @@
 import { Shape4D, Vector4D } from '@/types/4d';
 
+function bitCount(n: number): number {
+  let count = 0;
+  while (n) {
+    n &= (n - 1);
+    count++;
+  }
+  return count;
+}
+
 export function createCube(size: number = 1): Shape4D {
   const vertices: Vector4D[] = [];
   for (let i = 0; i < 16; i++) {
@@ -14,7 +23,7 @@ export function createCube(size: number = 1): Shape4D {
   for (let i = 0; i < 16; i++) {
     for (let j = i + 1; j < 16; j++) {
       const diff = i ^ j;
-      if (Number.bitCount ? Number.bitCount(diff) === 1 : (diff.toString(2).split('1').length - 1) === 1) {
+      if (bitCount(diff) === 1) {
         edges.push([i, j]);
       }
     }
@@ -69,7 +78,8 @@ export function createGroundPlane(options?: {
   return {
     vertices,
     edges,
-    position: { x: 0, y: 0, z: 0, w: 0 }
+    position: { x: 0, y: 0, z: 0, w: 0 },
+    affectedByGlobalTransform: false
   };
 }
 

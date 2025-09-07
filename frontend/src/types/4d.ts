@@ -11,6 +11,8 @@ export interface Shape4D {
   vertices: Vector4D[];
   edges: number[][]; // Pairs of vertex indices
   position: Vector4D;
+  // If true or undefined, global transforms apply. If false, shape stays static.
+  affectedByGlobalTransform?: boolean;
 }
 
 export interface Transform4D {
