@@ -61,59 +61,129 @@ export class Vector4DUtils {
     };
   }
 
-  // New utility function to apply all rotations
+  // 4x4 rotation matrices for each plane
+  static rotationMatrixXY(angle: number): number[][] {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [
+      [c, -s, 0, 0],
+      [s, c, 0, 0],
+      [0, 0, 1, 0],
+      [0, 0, 0, 1]
+    ];
+  }
+
+  static rotationMatrixXZ(angle: number): number[][] {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [
+      [c, 0, -s, 0],
+      [0, 1, 0, 0],
+      [s, 0, c, 0],
+      [0, 0, 0, 1]
+    ];
+  }
+
+  static rotationMatrixXW(angle: number): number[][] {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [
+      [c, 0, 0, -s],
+      [0, 1, 0, 0],
+      [0, 0, 1, 0],
+      [s, 0, 0, c]
+    ];
+  }
+
+  static rotationMatrixYZ(angle: number): number[][] {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [
+      [1, 0, 0, 0],
+      [0, c, -s, 0],
+      [0, s, c, 0],
+      [0, 0, 0, 1]
+    ];
+  }
+
+  static rotationMatrixYW(angle: number): number[][] {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [
+      [1, 0, 0, 0],
+      [0, c, 0, -s],
+      [0, 0, 1, 0],
+      [0, s, 0, c]
+    ];
+  }
+
+  static rotationMatrixZW(angle: number): number[][] {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [
+      [1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, c, -s],
+      [0, 0, s, c]
+    ];
+  }
+
+  // Matrix multiplication for 4x4 matrices
+  static matrixMultiplyMatrix(a: number[][], b: number[][]): number[][] {
+    const result: number[][] = Array(4).fill(0).map(() => Array(4).fill(0));
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        for (let k = 0; k < 4; k++) {
+          result[i][j] += a[i][k] * b[k][j];
+        }
+      }
+    }
+    return result;
+  }
+
+  // Matrix-vector multiplication for 4D
+  static matrixMultiplyVector(matrix: number[][], vector: Vector4D): Vector4D {
+    return {
+      x: matrix[0][0] * vector.x + matrix[0][1] * vector.y + matrix[0][2] * vector.z + matrix[0][3] * vector.w,
+      y: matrix[1][0] * vector.x + matrix[1][1] * vector.y + matrix[1][2] * vector.z + matrix[1][3] * vector.w,
+      z: matrix[2][0] * vector.x + matrix[2][1] * vector.y + matrix[2][2] * vector.z + matrix[2][3] * vector.w,
+      w: matrix[3][0] * vector.x + matrix[3][1] * vector.y + matrix[3][2] * vector.z + matrix[3][3] * vector.w,
+    };
+  }
+
+  // Compose all rotation matrices into a single transformation matrix
+  static composeTransformMatrix(transform: Transform4D): number[][] {
+    // Start with identity matrix
+    let result: number[][] = [
+      [1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 1, 0],
+      [0, 0, 0, 1]
+    ];
+
+    // Apply rotations in sequence: XY, XZ, XW, YZ, YW, ZW
+    // Matrix multiplication order: result = R_zw * R_yw * R_yz * R_xw * R_xz * R_xy
+    const matrices = [
+      this.rotationMatrixXY(transform.rotation_xy),
+      this.rotationMatrixXZ(transform.rotation_xz),
+      this.rotationMatrixXW(transform.rotation_xw),
+      this.rotationMatrixYZ(transform.rotation_yz),
+      this.rotationMatrixYW(transform.rotation_yw),
+      this.rotationMatrixZW(transform.rotation_zw),
+    ];
+
+    // Multiply matrices in reverse order to match sequential application
+    for (let i = matrices.length - 1; i >= 0; i--) {
+      result = this.matrixMultiplyMatrix(matrices[i], result);
+    }
+
+    return result;
+  }
+
+  // Apply all rotations using matrix-based approach
   static rotate(point: Vector4D, transform: Transform4D): Vector4D {
-    let rotated = { ...point };
-
-    // XY rotation
-    const cosXY = Math.cos(transform.rotation_xy);
-    const sinXY = Math.sin(transform.rotation_xy);
-    let tempX = rotated.x * cosXY - rotated.y * sinXY;
-    let tempY = rotated.x * sinXY + rotated.y * cosXY;
-    rotated.x = tempX;
-    rotated.y = tempY;
-
-    // XZ rotation
-    const cosXZ = Math.cos(transform.rotation_xz);
-    const sinXZ = Math.sin(transform.rotation_xz);
-    tempX = rotated.x * cosXZ - rotated.z * sinXZ;
-    let tempZ = rotated.x * sinXZ + rotated.z * cosXZ;
-    rotated.x = tempX;
-    rotated.z = tempZ;
-
-    // XW rotation
-    const cosXW = Math.cos(transform.rotation_xw);
-    const sinXW = Math.sin(transform.rotation_xw);
-    tempX = rotated.x * cosXW - rotated.w * sinXW;
-    let tempW = rotated.x * sinXW + rotated.w * cosXW;
-    rotated.x = tempX;
-    rotated.w = tempW;
-    
-    // YZ rotation
-    const cosYZ = Math.cos(transform.rotation_yz);
-    const sinYZ = Math.sin(transform.rotation_yz);
-    tempY = rotated.y * cosYZ - rotated.z * sinYZ;
-    tempZ = rotated.y * sinYZ + rotated.z * cosYZ;
-    rotated.y = tempY;
-    rotated.z = tempZ;
-
-    // YW rotation
-    const cosYW = Math.cos(transform.rotation_yw);
-    const sinYW = Math.sin(transform.rotation_yw);
-    tempY = rotated.y * cosYW - rotated.w * sinYW;
-    tempW = rotated.y * sinYW + rotated.w * cosYW;
-    rotated.y = tempY;
-    rotated.w = tempW;
-    
-    // ZW rotation
-    const cosZW = Math.cos(transform.rotation_zw);
-    const sinZW = Math.sin(transform.rotation_zw);
-    tempZ = rotated.z * cosZW - rotated.w * sinZW;
-    tempW = rotated.z * sinZW + rotated.w * cosZW;
-    rotated.z = tempZ;
-    rotated.w = tempW;
-
-    return rotated;
+    const matrix = this.composeTransformMatrix(transform);
+    return this.matrixMultiplyVector(matrix, point);
   }
 
   // Project 4D point to 3D using perspective projection - optimized
