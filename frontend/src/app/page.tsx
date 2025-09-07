@@ -119,7 +119,7 @@ export default function Home() {
           hasMovement = true;
         }
 
-        // Rotation controls
+        // Rotation controls - all 6 planes in 4D space
         if (keysPressed.has('i')) {
           newTransform.rotation_xy += rotateSpeed;
           hasMovement = true;
@@ -142,6 +142,33 @@ export default function Home() {
         }
         if (keysPressed.has('o')) {
           newTransform.rotation_xw -= rotateSpeed;
+          hasMovement = true;
+        }
+        // YZ plane rotation (7/8 keys)
+        if (keysPressed.has('7') || keysPressed.has('Digit7')) {
+          newTransform.rotation_yz += rotateSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('8') || keysPressed.has('Digit8')) {
+          newTransform.rotation_yz -= rotateSpeed;
+          hasMovement = true;
+        }
+        // YW plane rotation (9/0 keys)
+        if (keysPressed.has('9') || keysPressed.has('Digit9')) {
+          newTransform.rotation_yw += rotateSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('0') || keysPressed.has('Digit0')) {
+          newTransform.rotation_yw -= rotateSpeed;
+          hasMovement = true;
+        }
+        // ZW plane rotation (;/' keys)
+        if (keysPressed.has(';') || keysPressed.has('Semicolon')) {
+          newTransform.rotation_zw += rotateSpeed;
+          hasMovement = true;
+        }
+        if (keysPressed.has('\'') || keysPressed.has('Quote')) {
+          newTransform.rotation_zw -= rotateSpeed;
           hasMovement = true;
         }
 
@@ -215,18 +242,36 @@ export default function Home() {
           <p><kbd className="bg-gray-700 px-1 rounded">WASD</kbd> - Move X/Y</p>
           <p><kbd className="bg-gray-700 px-1 rounded">QE</kbd> - Move Z</p>
           <p><kbd className="bg-gray-700 px-1 rounded">ZX</kbd> - Move W (4th dimension)</p>
-          <p><kbd className="bg-gray-700 px-1 rounded">IJKL</kbd> - Rotate</p>
+          <div className="mt-2">
+            <p className="text-gray-400 text-xs mb-1">4D Rotations:</p>
+            <p><kbd className="bg-gray-700 px-1 rounded">I/K</kbd> - XY plane</p>
+            <p><kbd className="bg-gray-700 px-1 rounded">J/L</kbd> - XZ plane</p>
+            <p><kbd className="bg-gray-700 px-1 rounded">U/O</kbd> - XW plane</p>
+            <p><kbd className="bg-gray-700 px-1 rounded">7/8</kbd> - YZ plane</p>
+            <p><kbd className="bg-gray-700 px-1 rounded">9/0</kbd> - YW plane</p>
+            <p><kbd className="bg-gray-700 px-1 rounded">;/'</kbd> - ZW plane</p>
+          </div>
         </div>
       </div>
 
       {/* Transform Info - memoized for performance */}
-      <div className="absolute top-20 right-4 z-10 bg-black/70 backdrop-blur-sm p-4 rounded-lg text-sm">
+      <div className="absolute top-20 right-4 z-10 bg-black/70 backdrop-blur-sm p-4 rounded-lg text-sm max-w-xs">
         <h3 className="font-semibold mb-2">Position:</h3>
-        <div className="space-y-1 text-gray-300 font-mono">
+        <div className="space-y-1 text-gray-300 font-mono mb-3">
           <p>X: {transform.translation.x.toFixed(1)}</p>
           <p>Y: {transform.translation.y.toFixed(1)}</p>
           <p>Z: {transform.translation.z.toFixed(1)}</p>
           <p>W: {transform.translation.w.toFixed(1)}</p>
+        </div>
+
+        <h3 className="font-semibold mb-2">Rotations:</h3>
+        <div className="space-y-1 text-gray-300 font-mono text-xs">
+          <p>XY: {(transform.rotation_xy * 180 / Math.PI).toFixed(0)}°</p>
+          <p>XZ: {(transform.rotation_xz * 180 / Math.PI).toFixed(0)}°</p>
+          <p>XW: {(transform.rotation_xw * 180 / Math.PI).toFixed(0)}°</p>
+          <p>YZ: {(transform.rotation_yz * 180 / Math.PI).toFixed(0)}°</p>
+          <p>YW: {(transform.rotation_yw * 180 / Math.PI).toFixed(0)}°</p>
+          <p>ZW: {(transform.rotation_zw * 180 / Math.PI).toFixed(0)}°</p>
         </div>
       </div>
 
