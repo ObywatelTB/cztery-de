@@ -88,10 +88,10 @@ function Shape4DRenderer({
             itemSize={1}
           />
         </bufferGeometry>
-        <lineBasicMaterial attach="material" color="#ffffff" />
+        <lineBasicMaterial attach="material" color={shape.color || "#ffffff"} />
       </lineSegments>
     );
-  }, [edges, initialPositions, vertices.length]);
+  }, [edges, initialPositions, vertices.length, shape.color]);
   
   // Create the points geometry once
   const points = useMemo(() => {

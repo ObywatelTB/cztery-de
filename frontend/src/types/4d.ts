@@ -13,6 +13,8 @@ export interface Shape4D {
   position: Vector4D;
   // If true or undefined, global transforms apply. If false, shape stays static.
   affectedByGlobalTransform?: boolean;
+  // Color for rendering (hex string)
+  color?: string;
 }
 
 export interface Transform4D {

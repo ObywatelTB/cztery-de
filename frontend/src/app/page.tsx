@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FourDVisualization from '@/components/FourDVisualization';
 import { Shape4D } from '@/types/4d';
-import { createGroundPlane } from '@/shapes/definitions';
+import { createGroundPlane, createOrangePlane } from '@/shapes/definitions';
 import { useTransformForUI } from '@/store/transformStore';
 import { KeyboardControls } from '@/components/KeyboardControls';
 
@@ -11,12 +11,14 @@ import { KeyboardControls } from '@/components/KeyboardControls';
 const API_BASE_URL = 'http://localhost:3010';
 
 export default function Home() {
-  const [shapes, setShapes] = useState<Shape4D[]>([]);
+  const [allShapes, setAllShapes] = useState<Shape4D[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showWhitePlane, setShowWhitePlane] = useState(true);
+  const [showOrangePlane, setShowOrangePlane] = useState(true);
   const transform = useTransformForUI();
 
-  // Fetch 4D cube from backend
+  // Fetch 4D cube from backend and create planes once
   const fetchCube = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -25,8 +27,13 @@ export default function Home() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const cubeData = await response.json();
-      const plane = createGroundPlane({ size: 10, divisions: 24, y: -2, w: 0 });
-      setShapes([cubeData, plane]);
+
+      // Create all shapes once and store them
+      const cube = cubeData;
+      const whitePlane = createGroundPlane({ size: 10, divisions: 24, y: -2, w: 0 });
+      const orangePlane = createOrangePlane({ size: 10, divisions: 24, y: -3.5, w: 0 });
+
+      setAllShapes([cube, whitePlane, orangePlane]);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch 4D cube');
@@ -35,6 +42,14 @@ export default function Home() {
       setIsLoading(false);
     }
   }, []);
+
+  // Filter shapes based on visibility state
+  const shapes = allShapes.filter((shape, index) => {
+    if (index === 0) return true; // Always show cube
+    if (index === 1) return showWhitePlane; // White plane
+    if (index === 2) return showOrangePlane; // Orange plane
+    return true;
+  });
 
   // Initialize cube on component mount
   useEffect(() => {
@@ -95,6 +110,33 @@ export default function Home() {
             <p><kbd className="bg-gray-700 px-1 rounded">9/0</kbd> - YW plane</p>
             <p><kbd className="bg-gray-700 px-1 rounded">;/'</kbd> - ZW plane</p>
           </div>
+        </div>
+      </div>
+
+      {/* Plane Visibility Controls */}
+      <div className="absolute top-96 left-4 z-10 bg-black/70 backdrop-blur-sm p-4 rounded-lg text-sm">
+        <h3 className="font-semibold mb-3">Plane Visibility:</h3>
+        <div className="space-y-2">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showWhitePlane}
+              onChange={(e) => setShowWhitePlane(e.target.checked)}
+              className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-gray-300">White Plane</span>
+            <div className="w-3 h-3 bg-white rounded border"></div>
+          </label>
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showOrangePlane}
+              onChange={(e) => setShowOrangePlane(e.target.checked)}
+              className="rounded border-gray-600 text-orange-500 focus:ring-orange-500"
+            />
+            <span className="text-gray-300">Orange Plane</span>
+            <div className="w-3 h-3 bg-orange-400 rounded border"></div>
+          </label>
         </div>
       </div>
 
