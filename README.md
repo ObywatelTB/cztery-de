@@ -2,6 +2,10 @@
 
 An interactive 4D space visualization project featuring a navigable 4D hypercube (tesseract) with real-time 3D projection.
 
+```bash
+files-to-prompt  . -o llm-data/concat.txt -e .py -e .tsx -e .ts
+```
+
 ## 🚀 Features
 
 - **Interactive 4D Visualization**: Navigate through 4D space with keyboard controls

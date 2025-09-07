@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { Shape4D, Vector4DUtils, Transform4D } from '@/types/4d';
 import { useTransformStore } from '@/store/transformStore';
@@ -136,6 +136,12 @@ const CoordinateAxes4D = React.memo(({
   const zAxisGeo = useRef<THREE.BufferGeometry>(null!);
   const wAxisGeo = useRef<THREE.BufferGeometry>(null!);
 
+  // State for axis endpoint positions (for text labels)
+  const [xAxisEnd, setXAxisEnd] = React.useState(new THREE.Vector3(2, 0, 0));
+  const [yAxisEnd, setYAxisEnd] = React.useState(new THREE.Vector3(0, 2, 0));
+  const [zAxisEnd, setZAxisEnd] = React.useState(new THREE.Vector3(0, 0, 2));
+  const [wAxisEnd, setWAxisEnd] = React.useState(new THREE.Vector3(1.5, 0, 0));
+
   // Create 4D axis vectors that will be projected to 3D
   const create4DAxis = (axisVector: {x: number, y: number, z: number, w: number}) => {
     const points = [
@@ -153,102 +159,238 @@ const CoordinateAxes4D = React.memo(({
     });
   };
 
-  // Update axes positions in useFrame
+  // Update transformable axes positions in useFrame (only when enabled)
   useFrame(() => {
-    if (!showAxes) return;
+    if (showAxes) {
+      // Update X axis
+      const xPoints = create4DAxis({ x: 2, y: 0, z: 0, w: 0 });
+      if (xAxisGeo.current) {
+        const positions = xAxisGeo.current.attributes.position as THREE.BufferAttribute;
+        positions.setXYZ(0, xPoints[0].x, xPoints[0].y, xPoints[0].z);
+        positions.setXYZ(1, xPoints[1].x, xPoints[1].y, xPoints[1].z);
+        positions.needsUpdate = true;
+      }
+      setXAxisEnd(new THREE.Vector3(xPoints[1].x, xPoints[1].y, xPoints[1].z));
 
-    // Update X axis
-    const xPoints = create4DAxis({ x: 2, y: 0, z: 0, w: 0 });
-    if (xAxisGeo.current) {
-      const positions = xAxisGeo.current.attributes.position as THREE.BufferAttribute;
-      positions.setXYZ(0, xPoints[0].x, xPoints[0].y, xPoints[0].z);
-      positions.setXYZ(1, xPoints[1].x, xPoints[1].y, xPoints[1].z);
-      positions.needsUpdate = true;
-    }
+      // Update Y axis
+      const yPoints = create4DAxis({ x: 0, y: 2, z: 0, w: 0 });
+      if (yAxisGeo.current) {
+        const positions = yAxisGeo.current.attributes.position as THREE.BufferAttribute;
+        positions.setXYZ(0, yPoints[0].x, yPoints[0].y, yPoints[0].z);
+        positions.setXYZ(1, yPoints[1].x, yPoints[1].y, yPoints[1].z);
+        positions.needsUpdate = true;
+      }
+      setYAxisEnd(new THREE.Vector3(yPoints[1].x, yPoints[1].y, yPoints[1].z));
 
-    // Update Y axis
-    const yPoints = create4DAxis({ x: 0, y: 2, z: 0, w: 0 });
-    if (yAxisGeo.current) {
-      const positions = yAxisGeo.current.attributes.position as THREE.BufferAttribute;
-      positions.setXYZ(0, yPoints[0].x, yPoints[0].y, yPoints[0].z);
-      positions.setXYZ(1, yPoints[1].x, yPoints[1].y, yPoints[1].z);
-      positions.needsUpdate = true;
-    }
+      // Update Z axis
+      const zPoints = create4DAxis({ x: 0, y: 0, z: 2, w: 0 });
+      if (zAxisGeo.current) {
+        const positions = zAxisGeo.current.attributes.position as THREE.BufferAttribute;
+        positions.setXYZ(0, zPoints[0].x, zPoints[0].y, zPoints[0].z);
+        positions.setXYZ(1, zPoints[1].x, zPoints[1].y, zPoints[1].z);
+        positions.needsUpdate = true;
+      }
+      setZAxisEnd(new THREE.Vector3(zPoints[1].x, zPoints[1].y, zPoints[1].z));
 
-    // Update Z axis
-    const zPoints = create4DAxis({ x: 0, y: 0, z: 2, w: 0 });
-    if (zAxisGeo.current) {
-      const positions = zAxisGeo.current.attributes.position as THREE.BufferAttribute;
-      positions.setXYZ(0, zPoints[0].x, zPoints[0].y, zPoints[0].z);
-      positions.setXYZ(1, zPoints[1].x, zPoints[1].y, zPoints[1].z);
-      positions.needsUpdate = true;
-    }
-
-    // Update W axis - goes along both X and W dimensions for visibility
-    const wPoints = create4DAxis({ x: 1.5, y: 0, z: 0, w: 2 });
-    if (wAxisGeo.current) {
-      const positions = wAxisGeo.current.attributes.position as THREE.BufferAttribute;
-      positions.setXYZ(0, wPoints[0].x, wPoints[0].y, wPoints[0].z);
-      positions.setXYZ(1, wPoints[1].x, wPoints[1].y, wPoints[1].z);
-      positions.needsUpdate = true;
+      // Update W axis - goes along both X and W dimensions for visibility
+      const wPoints = create4DAxis({ x: 1.5, y: 0, z: 0, w: 2 });
+      if (wAxisGeo.current) {
+        const positions = wAxisGeo.current.attributes.position as THREE.BufferAttribute;
+        positions.setXYZ(0, wPoints[0].x, wPoints[0].y, wPoints[0].z);
+        positions.setXYZ(1, wPoints[1].x, wPoints[1].y, wPoints[1].z);
+        positions.needsUpdate = true;
+      }
+      setWAxisEnd(new THREE.Vector3(wPoints[1].x, wPoints[1].y, wPoints[1].z));
     }
   });
 
-  if (!showAxes) return null;
+  // Always show fixed reference axes, transformable axes only when enabled
 
   return (
     <group>
-      {/* X axis - subtle red */}
-      <line>
-        <bufferGeometry ref={xAxisGeo}>
-          <bufferAttribute
-            attach="attributes-position"
-            count={2}
-            array={new Float32Array([0, 0, 0, 2, 0, 0])}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <lineBasicMaterial color="#ff9999" />
-      </line>
+      {/* Fixed reference axes at origin (always visible) */}
+      <group>
+        {/* Fixed X axis - bright red */}
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={2}
+              array={new Float32Array([-1, 0, 0, 1, 0, 0])}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#ff4444" linewidth={1} />
+        </line>
+        <Text
+          position={[1.2, 0.1, 0]}
+          fontSize={0.25}
+          color="#ff4444"
+          anchorX="center"
+          anchorY="middle"
+        >
+          X0
+        </Text>
 
-      {/* Y axis - subtle green */}
-      <line>
-        <bufferGeometry ref={yAxisGeo}>
-          <bufferAttribute
-            attach="attributes-position"
-            count={2}
-            array={new Float32Array([0, 0, 0, 0, 2, 0])}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <lineBasicMaterial color="#99ff99" />
-      </line>
+        {/* Fixed Y axis - bright green */}
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={2}
+              array={new Float32Array([0, -1, 0, 0, 1, 0])}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#44ff44" linewidth={1} />
+        </line>
+        <Text
+          position={[0.1, 1.2, 0]}
+          fontSize={0.25}
+          color="#44ff44"
+          anchorX="center"
+          anchorY="middle"
+        >
+          Y0
+        </Text>
 
-      {/* Z axis - subtle blue */}
-      <line>
-        <bufferGeometry ref={zAxisGeo}>
-          <bufferAttribute
-            attach="attributes-position"
-            count={2}
-            array={new Float32Array([0, 0, 0, 0, 0, 2])}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <lineBasicMaterial color="#9999ff" />
-      </line>
+        {/* Fixed Z axis - bright blue */}
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={2}
+              array={new Float32Array([0, 0, -1, 0, 0, 1])}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#4444ff" linewidth={1} />
+        </line>
+        <Text
+          position={[0.1, 0.1, 1.2]}
+          fontSize={0.25}
+          color="#4444ff"
+          anchorX="center"
+          anchorY="middle"
+        >
+          Z0
+        </Text>
 
-      {/* W axis - subtle purple */}
-      <line>
-        <bufferGeometry ref={wAxisGeo}>
-          <bufferAttribute
-            attach="attributes-position"
-            count={2}
-            array={new Float32Array([0, 0, 0, 1.5, 0, 0])}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <lineBasicMaterial color="#cc99ff" />
-      </line>
+        {/* Fixed W axis - bright purple */}
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={2}
+              array={new Float32Array([-0.8, 0, 0, 0.8, 0, 0])}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#cc44ff" linewidth={1} />
+        </line>
+        <Text
+          position={[0.9, 0.1, 0]}
+          fontSize={0.25}
+          color="#cc44ff"
+          anchorX="center"
+          anchorY="middle"
+        >
+          W0
+        </Text>
+      </group>
+
+      {/* Transformable axes (when enabled) */}
+      {showAxes && (
+        <group>
+          {/* X axis - subtle red */}
+          <line>
+            <bufferGeometry ref={xAxisGeo}>
+              <bufferAttribute
+                attach="attributes-position"
+                count={2}
+                array={new Float32Array([0, 0, 0, 2, 0, 0])}
+                itemSize={3}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#ff9999" />
+          </line>
+          <Text
+            position={[xAxisEnd.x + 0.2, xAxisEnd.y + 0.1, xAxisEnd.z]}
+            fontSize={0.3}
+            color="#ff9999"
+            anchorX="center"
+            anchorY="middle"
+          >
+            X
+          </Text>
+
+          {/* Y axis - subtle green */}
+          <line>
+            <bufferGeometry ref={yAxisGeo}>
+              <bufferAttribute
+                attach="attributes-position"
+                count={2}
+                array={new Float32Array([0, 0, 0, 0, 2, 0])}
+                itemSize={3}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#99ff99" />
+          </line>
+          <Text
+            position={[yAxisEnd.x + 0.1, yAxisEnd.y + 0.3, yAxisEnd.z]}
+            fontSize={0.3}
+            color="#99ff99"
+            anchorX="center"
+            anchorY="middle"
+          >
+            Y
+          </Text>
+
+          {/* Z axis - subtle blue */}
+          <line>
+            <bufferGeometry ref={zAxisGeo}>
+              <bufferAttribute
+                attach="attributes-position"
+                count={2}
+                array={new Float32Array([0, 0, 0, 0, 0, 2])}
+                itemSize={3}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#9999ff" />
+          </line>
+          <Text
+            position={[zAxisEnd.x + 0.1, zAxisEnd.y + 0.1, zAxisEnd.z + 0.3]}
+            fontSize={0.3}
+            color="#9999ff"
+            anchorX="center"
+            anchorY="middle"
+          >
+            Z
+          </Text>
+
+          {/* W axis - subtle purple */}
+          <line>
+            <bufferGeometry ref={wAxisGeo}>
+              <bufferAttribute
+                attach="attributes-position"
+                count={2}
+                array={new Float32Array([0, 0, 0, 1.5, 0, 0])}
+                itemSize={3}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#cc99ff" />
+          </line>
+          <Text
+            position={[wAxisEnd.x + 0.3, wAxisEnd.y + 0.1, wAxisEnd.z]}
+            fontSize={0.3}
+            color="#cc99ff"
+            anchorX="center"
+            anchorY="middle"
+          >
+            W
+          </Text>
+        </group>
+      )}
     </group>
   );
 });
