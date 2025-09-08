@@ -171,11 +171,21 @@ export function createGreenPlane(options?: {
   const vertices: Vector4D[] = [];
   const edges: number[][] = [];
 
-  const computeHeight = (x: number, z: number) => {
+  const computeHeight = (x: number, z: number, wParam: number) => {
+    // wParam in [-wSize, wSize] (or single legacy value). Build a smooth morph factor in [0,1]
+    const wNorm = wSize ? (wParam / wSize) : 0; // [-1,1]
+    const morph = 0.5 + 0.5 * Math.sin(wNorm * Math.PI); // [0,1], smooth sinusoidal
+
+    // Base hills
     const hill1 = Math.sin(x * 0.5) * Math.cos(z * 0.3) * amplitude;
     const hill2 = Math.sin(x * 0.2 + z * 0.4) * amplitude * 0.6;
     const hill3 = Math.sin((x + z) * 0.15) * amplitude * 0.4;
-    return baseY + hill1 + hill2 + hill3;
+
+    // Morphing components that vary with w
+    const morph1 = Math.sin(x * (0.4 + 0.2 * morph)) * Math.cos(z * (0.25 + 0.15 * morph)) * amplitude * 0.5 * morph;
+    const morph2 = Math.sin(x * 0.18 + z * (0.35 + 0.15 * morph) + wNorm * 0.8) * amplitude * 0.4 * morph;
+
+    return baseY + hill1 + hill2 + hill3 + morph1 + morph2;
   };
 
   if (!wSize) {
@@ -184,7 +194,7 @@ export function createGreenPlane(options?: {
       const z = -size + iz * stepXZ;
       for (let ix = 0; ix <= divisions; ix++) {
         const x = -size + ix * stepXZ;
-        const y = computeHeight(x, z);
+        const y = computeHeight(x, z, legacyW);
         vertices.push({ x, y, z, w: legacyW });
       }
     }
@@ -213,7 +223,7 @@ export function createGreenPlane(options?: {
         const z = -size + iz * stepXZ;
         for (let ix = 0; ix <= divisions; ix++) {
           const x = -size + ix * stepXZ;
-          const y = computeHeight(x, z);
+          const y = computeHeight(x, z, w);
           vertices.push({ x, y, z, w });
         }
       }

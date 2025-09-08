@@ -1,106 +1,113 @@
-# Cztery-De: 4D Space Visualization
+# Cztery-De: Wizualizacja Przestrzeni 4D
 
-An interactive 4D space visualization project featuring a navigable 4D hypercube (tesseract) with real-time 3D projection.
+Interaktywny projekt wizualizacji przestrzeni 4D z nawigowalnym hipercubem 4D (tesseraktem) z projekcją 3D w czasie rzeczywistym.
 
 ```bash
 files-to-prompt  . -o llm-data/concat.txt -e .py -e .tsx -e .ts
 ```
 
-## 🚀 Features
+## Obserwacje
 
-- **Interactive 4D Visualization**: Navigate through 4D space with keyboard controls
-- **Real-time 3D Projection**: See 4D shapes projected into 3D space
-- **FastAPI Backend**: RESTful API for 4D shape generation and transformations
-- **Next.js Frontend**: Modern React frontend with Three.js visualization
-- **Extensible Architecture**: Built for easy expansion and future enhancements
+- obecnie chyba używamy biblioteki renderującej w 3d. I siłą rzeczy rozwiązanie wireframe sprawia że czwarta współrzędna jest traktowana inaczej. Widzę 2 rozwiązania:
+   - użycie wireframa, ale takiego, który byłby stosowany do wszystkich 4 współrzędnych (jak?) a nie tylko jednej wybranej
+   - zrobienie jakiejś drogi (nie-euklidesowej geometrii) wizualizowania rzeczy, która 'rozszerza perspektywę' do 4 współrzędnych, starając się je wszystkie pomieścić. Poszukać czy takie coś istnieje (pokontemplować z Grokiem)
+- rozrysować sobie na kartce jak dokładnie miałaby działać grawitacja (na hiperkuli). Jak ta siła miałaby ciągnąć wektorem rozbijanym na 4 kierunki itd.
 
-## 🏗️ Architecture
+## 🚀 Funkcje
+
+- **Interaktywna Wizualizacja 4D**: Nawigacja przez przestrzeń 4D za pomocą sterowania klawiszami
+- **Projekcja 3D w Czasie Rzeczywistym**: Zobacz kształty 4D projektowane w przestrzeń 3D
+- **Backend FastAPI**: RESTful API do generowania kształtów 4D i transformacji
+- **Frontend Next.js**: Nowoczesny frontend React z wizualizacją Three.js
+- **Rozszerzalna Architektura**: Zbudowany dla łatwego rozszerzania i przyszłych ulepszeń
+
+## 🏗️ Architektura
 
 ```
 cztery-de/
-├── backend/          # FastAPI backend (Python/Poetry)
-├── frontend/         # Next.js frontend (React/TypeScript)
-└── shared/           # Shared utilities and types
+├── backend/          # Backend FastAPI (Python/Poetry)
+├── frontend/         # Frontend Next.js (React/TypeScript)
+└── shared/           # Wspólne narzędzia i typy
 ```
 
-## 🛠️ Tech Stack
+## 🛠️ Stos Technologiczny
 
 - **Backend**: FastAPI, Poetry, Pydantic, Uvicorn
 - **Frontend**: Next.js, React, TypeScript, Three.js, Tailwind CSS
-- **Development**: Concurrently for running both services
+- **Rozwój**: Concurrently do uruchamiania obu usług
 
-## 🚀 Getting Started
+## 🚀 Pierwsze Kroki
 
-### Prerequisites
+### Wymagania wstępne
 
 - Python 3.12+
 - Node.js 18+
 - Poetry
 - npm
 
-### Installation
+### Instalacja
 
-1. **Clone and setup the project**:
+1. **Sklonuj i skonfiguruj projekt**:
    ```bash
    git clone <repository-url>
    cd cztery-de
    ```
 
-2. **Install dependencies**:
+2. **Zainstaluj zależności**:
    ```bash
-   npm install  # Installs concurrently and root dependencies
-   npm run install  # Installs backend and frontend dependencies
+   npm install  # Instaluje concurrently i główne zależności
+   npm run install  # Instaluje zależności backendu i frontendu
    ```
 
-### Running the Application
+### Uruchamianie Aplikacji
 
-**Development Mode** (runs both frontend and backend):
+**Tryb Rozwoju** (uruchamia zarówno frontend jak i backend):
 ```bash
 npm run dev
 ```
 
-This will start:
-- Backend API on `http://localhost:8000`
-- Frontend on `http://localhost:3000`
+To uruchomi:
+- API backendu na `http://localhost:8000`
+- Frontend na `http://localhost:3000`
 
-**Individual Services**:
+**Pojedyncze Usługi**:
 ```bash
-# Backend only
+# Tylko backend
 npm run dev:backend
 
-# Frontend only
+# Tylko frontend
 npm run dev:frontend
 ```
 
-## 🎮 Controls
+## 🎮 Sterowanie
 
-### Movement (Translation)
-- `WASD` - Move in X/Y plane
-- `Q/E` - Move up/down (Z axis)
-- `Z/X` - Move in 4th dimension (W axis)
-- Arrow keys also work for basic movement
+### Ruch (Translacja)
+- `WASD` - Ruch w płaszczyźnie X/Y
+- `Q/E` - Ruch w górę/w dół (oś Z)
+- `Z/X` - Ruch w 4. wymiarze (oś W)
+- Klawisze strzałek również działają do podstawowego ruchu
 
-### Rotation
-- `I/K` - Rotate in XY plane
-- `J/L` - Rotate in XZ plane
-- `U/O` - Rotate in XW plane
+### Obrót
+- `I/K` - Obrót w płaszczyźnie XY
+- `J/L` - Obrót w płaszczyźnie XZ
+- `U/O` - Obrót w płaszczyźnie XW
 
-## 🔧 API Endpoints
+## 🔧 Punkty Końcowe API
 
-- `GET /` - API root
-- `GET /shapes/cube` - Get a 4D hypercube
-- `POST /shapes/transform` - Apply transformations to shapes
-- `GET /health` - Health check
+- `GET /` - Główny punkt API
+- `GET /shapes/cube` - Pobierz hipercub 4D
+- `POST /shapes/transform` - Zastosuj transformacje do kształtów
+- `GET /health` - Sprawdzenie zdrowia
 
-## 🏗️ Project Structure
+## 🏗️ Struktura Projektu
 
 ### Backend (`/backend`)
 ```
 backend/
-├── main.py           # FastAPI application
-├── pyproject.toml    # Poetry configuration
-├── README.md         # Backend documentation
-└── venv/            # Virtual environment
+├── main.py           # Aplikacja FastAPI
+├── pyproject.toml    # Konfiguracja Poetry
+├── README.md         # Dokumentacja backendu
+└── venv/            # Środowisko wirtualne
 ```
 
 ### Frontend (`/frontend`)
@@ -108,48 +115,48 @@ backend/
 frontend/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx          # Main application
-│   │   └── layout.tsx        # App layout
+│   │   ├── page.tsx          # Główna aplikacja
+│   │   └── layout.tsx        # Układ aplikacji
 │   ├── components/
-│   │   └── FourDVisualization.tsx  # 4D visualization component
+│   │   └── FourDVisualization.tsx  # Komponent wizualizacji 4D
 │   └── types/
-│       └── 4d.ts             # TypeScript type definitions
+│       └── 4d.ts             # Definicje typów TypeScript
 ├── package.json
 └── next.config.ts
 ```
 
-## 🔮 Future Enhancements
+## 🔮 Przyszłe Rozszerzenia
 
-- Full 4D rotation matrices implementation
-- Multiple 4D shapes (spheres, cylinders, etc.)
-- Animation and interpolation
-- VR/AR support
-- Collaborative multi-user visualization
-- Advanced projection techniques
-- Shape morphing and deformation
+- Pełna implementacja macierzy obrotu 4D
+- Wielokrotne kształty 4D (sfery, cylindry, itp.)
+- Animacja i interpolacja
+- Wsparcie VR/AR
+- Współpracująca wizualizacja wieloużytkownikowa
+- Zaawansowane techniki projekcji
+- Morfing i deformacja kształtów
 
-## 📝 Development
+## 📝 Rozwój
 
-### Adding New 4D Shapes
+### Dodawanie Nowych Kształtów 4D
 
-1. Add shape generation logic to `backend/main.py`
-2. Update TypeScript types in `frontend/src/types/4d.ts`
-3. Create new API endpoints as needed
+1. Dodaj logikę generowania kształtów do `backend/main.py`
+2. Zaktualizuj typy TypeScript w `frontend/src/types/4d.ts`
+3. Utwórz nowe punkty końcowe API w razie potrzeby
 
-### Extending Visualizations
+### Rozszerzanie Wizualizacji
 
-1. Modify `FourDVisualization.tsx` for new rendering techniques
-2. Add new controls in `page.tsx`
-3. Implement additional transformation matrices
+1. Zmodyfikuj `FourDVisualization.tsx` dla nowych technik renderowania
+2. Dodaj nowe kontrolki w `page.tsx`
+3. Zaimplementuj dodatkowe macierze transformacji
 
-## 🤝 Contributing
+## 🤝 Współpraca
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+1. Zrób fork repozytorium
+2. Utwórz gałąź funkcji
+3. Zrób swoje zmiany
+4. Dodaj testy jeśli dotyczy
+5. Prześlij pull request
 
-## 📄 License
+## 📄 Licencja
 
-MIT License - see LICENSE file for details
+Licencja MIT - zobacz plik LICENSE po szczegóły
